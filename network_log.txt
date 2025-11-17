@@ -1,0 +1,116 @@
+
+=== REQUEST ===
+URL: https://eurofly.stefankiss.sk/ef3/traffic
+Method: GET
+Headers: {'host': 'eurofly.stefankiss.sk', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0', 'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'accept-language': 'en-US,en;q=0.5', 'accept-encoding': 'gzip, deflate, br, zstd', 'connection': 'keep-alive', 'upgrade-insecure-requests': '1', 'sec-fetch-dest': 'document', 'sec-fetch-mode': 'navigate', 'sec-fetch-site': 'none', 'sec-fetch-user': '?1'}
+PostData: None
+
+=== RESPONSE ===
+URL: https://eurofly.stefankiss.sk/ef3/traffic
+Status: 200
+Headers: {'server': 'openresty', 'date': 'Mon, 17 Nov 2025 14:18:11 GMT', 'content-type': 'text/html; charset=UTF-8', 'vary': 'Accept-Encoding', 'expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'cache-control': 'no-store, no-cache, must-revalidate', 'pragma': 'no-cache', 'set-cookie': 'PHPSESSID=779371fbd2ccadc710b314f845727f88; path=/', 'alt-svc': 'h3=":443"; ma=86400', 'content-encoding': 'br', 'x-firefox-spdy': 'h2'}
+
+=== REQUEST ===
+URL: https://eurofly.stefankiss.sk/assets/jquery-v3-6-0.min.js
+Method: GET
+Headers: {'host': 'eurofly.stefankiss.sk', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0', 'accept': '*/*', 'accept-language': 'en-US,en;q=0.5', 'accept-encoding': 'gzip, deflate, br, zstd', 'alt-used': 'eurofly.stefankiss.sk', 'connection': 'keep-alive', 'referer': 'https://eurofly.stefankiss.sk/ef3/traffic', 'cookie': 'PHPSESSID=779371fbd2ccadc710b314f845727f88', 'sec-fetch-dest': 'script', 'sec-fetch-mode': 'no-cors', 'sec-fetch-site': 'same-origin'}
+PostData: None
+
+=== REQUEST ===
+URL: https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap
+Method: GET
+Headers: {'host': 'fonts.googleapis.com', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0', 'accept': 'text/css,*/*;q=0.1', 'accept-language': 'en-US,en;q=0.5', 'accept-encoding': 'gzip, deflate, br, zstd', 'connection': 'keep-alive', 'referer': 'https://eurofly.stefankiss.sk/', 'sec-fetch-dest': 'style', 'sec-fetch-mode': 'no-cors', 'sec-fetch-site': 'cross-site'}
+PostData: None
+
+=== REQUEST ===
+URL: https://eurofly.stefankiss.sk/assets/simple-grid.css
+Method: GET
+Headers: {'host': 'eurofly.stefankiss.sk', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0', 'accept': 'text/css,*/*;q=0.1', 'accept-language': 'en-US,en;q=0.5', 'accept-encoding': 'gzip, deflate, br, zstd', 'alt-used': 'eurofly.stefankiss.sk', 'connection': 'keep-alive', 'referer': 'https://eurofly.stefankiss.sk/ef3/traffic', 'cookie': 'PHPSESSID=779371fbd2ccadc710b314f845727f88', 'sec-fetch-dest': 'style', 'sec-fetch-mode': 'no-cors', 'sec-fetch-site': 'same-origin'}
+PostData: None
+
+=== REQUEST ===
+URL: https://eurofly.stefankiss.sk/assets/app.css?ts=1763389091
+Method: GET
+Headers: {'host': 'eurofly.stefankiss.sk', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0', 'accept': 'text/css,*/*;q=0.1', 'accept-language': 'en-US,en;q=0.5', 'accept-encoding': 'gzip, deflate, br, zstd', 'alt-used': 'eurofly.stefankiss.sk', 'connection': 'keep-alive', 'referer': 'https://eurofly.stefankiss.sk/ef3/traffic', 'cookie': 'PHPSESSID=779371fbd2ccadc710b314f845727f88', 'sec-fetch-dest': 'style', 'sec-fetch-mode': 'no-cors', 'sec-fetch-site': 'same-origin'}
+PostData: None
+
+=== REQUEST ===
+URL: https://eurofly.stefankiss.sk/assets/app.js?t=1763389091
+Method: GET
+Headers: {'host': 'eurofly.stefankiss.sk', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0', 'accept': '*/*', 'accept-language': 'en-US,en;q=0.5', 'accept-encoding': 'gzip, deflate, br, zstd', 'alt-used': 'eurofly.stefankiss.sk', 'connection': 'keep-alive', 'referer': 'https://eurofly.stefankiss.sk/ef3/traffic', 'cookie': 'PHPSESSID=779371fbd2ccadc710b314f845727f88', 'sec-fetch-dest': 'script', 'sec-fetch-mode': 'no-cors', 'sec-fetch-site': 'same-origin'}
+PostData: None
+
+=== RESPONSE ===
+URL: https://eurofly.stefankiss.sk/assets/jquery-v3-6-0.min.js
+Status: 200
+Headers: {'server': 'openresty', 'date': 'Mon, 17 Nov 2025 14:18:17 GMT', 'content-type': 'application/javascript', 'vary': 'accept-encoding', 'last-modified': 'Sun, 02 Jul 2023 10:01:13 GMT', 'etag': 'W/"15d9c-5ff7e214f1f7c"', 'alt-svc': 'h3=":443"; ma=86400', 'content-encoding': 'br', 'x-firefox-http3': 'h3'}
+
+=== RESPONSE ===
+URL: https://eurofly.stefankiss.sk/assets/simple-grid.css
+Status: 200
+Headers: {'server': 'openresty', 'date': 'Mon, 17 Nov 2025 14:18:17 GMT', 'content-type': 'text/css', 'vary': 'accept-encoding', 'last-modified': 'Sun, 02 Jul 2023 10:01:13 GMT', 'etag': 'W/"850-5ff7e2153077d"', 'alt-svc': 'h3=":443"; ma=86400', 'content-encoding': 'br', 'x-firefox-http3': 'h3'}
+
+=== RESPONSE ===
+URL: https://eurofly.stefankiss.sk/assets/app.css?ts=1763389091
+Status: 200
+Headers: {'server': 'openresty', 'date': 'Mon, 17 Nov 2025 14:18:17 GMT', 'content-type': 'text/css', 'vary': 'accept-encoding', 'last-modified': 'Sun, 02 Jul 2023 10:01:12 GMT', 'etag': 'W/"d79-5ff7e2146e219"', 'alt-svc': 'h3=":443"; ma=86400', 'content-encoding': 'br', 'x-firefox-http3': 'h3'}
+
+=== RESPONSE ===
+URL: https://eurofly.stefankiss.sk/assets/app.js?t=1763389091
+Status: 200
+Headers: {'server': 'openresty', 'date': 'Mon, 17 Nov 2025 14:18:17 GMT', 'content-type': 'application/javascript', 'vary': 'accept-encoding', 'last-modified': 'Sun, 02 Jul 2023 10:01:13 GMT', 'etag': 'W/"63d-5ff7e214aba7a"', 'alt-svc': 'h3=":443"; ma=86400', 'content-encoding': 'br', 'x-firefox-http3': 'h3'}
+
+=== RESPONSE ===
+URL: https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap
+Status: 200
+Headers: {'content-type': 'text/css; charset=utf-8', 'vary': 'Sec-Fetch-Dest, Sec-Fetch-Mode, Sec-Fetch-Site', 'access-control-allow-origin': '*', 'timing-allow-origin': '*', 'link': '<https://fonts.gstatic.com>; rel=preconnect; crossorigin', 'strict-transport-security': 'max-age=31536000', 'expires': 'Mon, 17 Nov 2025 14:18:17 GMT', 'date': 'Mon, 17 Nov 2025 14:18:17 GMT', 'cache-control': 'private, max-age=86400', 'cross-origin-opener-policy': 'same-origin-allow-popups', 'cross-origin-resource-policy': 'cross-origin', 'content-security-policy-report-only': "require-trusted-types-for 'script';report-uri https://csp.withgoogle.com/csp/bcfae741e379a885f2ab2cf83ebe6d32/mr", 'content-encoding': 'gzip', 'server': 'ESF', 'x-xss-protection': '0', 'x-frame-options': 'SAMEORIGIN', 'x-content-type-options': 'nosniff', 'alt-svc': 'h3=":443"; ma=2592000, h3-29=":443"; ma=2592000', 'x-firefox-spdy': 'h2'}
+
+=== REQUEST ===
+URL: https://fonts.gstatic.com/s/opensans/v44/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTS-muw.woff2
+Method: GET
+Headers: {'host': 'fonts.gstatic.com', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0', 'accept': 'application/font-woff2;q=1.0,application/font-woff;q=0.9,*/*;q=0.8', 'accept-language': 'en-US,en;q=0.5', 'accept-encoding': 'identity', 'origin': 'https://eurofly.stefankiss.sk', 'connection': 'keep-alive', 'referer': 'https://fonts.googleapis.com/', 'sec-fetch-dest': 'font', 'sec-fetch-mode': 'cors', 'sec-fetch-site': 'cross-site'}
+PostData: None
+
+=== REQUEST ===
+URL: https://fonts.gstatic.com/s/opensans/v44/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTS-muw.woff2
+Method: GET
+Headers: {'host': 'fonts.gstatic.com', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0', 'accept': 'application/font-woff2;q=1.0,application/font-woff;q=0.9,*/*;q=0.8', 'accept-language': 'en-US,en;q=0.5', 'accept-encoding': 'identity', 'origin': 'https://eurofly.stefankiss.sk', 'connection': 'keep-alive', 'referer': 'https://fonts.googleapis.com/', 'sec-fetch-dest': 'font', 'sec-fetch-mode': 'cors', 'sec-fetch-site': 'cross-site'}
+PostData: None
+
+=== REQUEST ===
+URL: https://fonts.gstatic.com/s/opensans/v44/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTVOmu1aB.woff2
+Method: GET
+Headers: {'host': 'fonts.gstatic.com', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0', 'accept': 'application/font-woff2;q=1.0,application/font-woff;q=0.9,*/*;q=0.8', 'accept-language': 'en-US,en;q=0.5', 'accept-encoding': 'identity', 'origin': 'https://eurofly.stefankiss.sk', 'connection': 'keep-alive', 'referer': 'https://fonts.googleapis.com/', 'sec-fetch-dest': 'font', 'sec-fetch-mode': 'cors', 'sec-fetch-site': 'cross-site'}
+PostData: None
+
+=== REQUEST ===
+URL: https://eurofly.stefankiss.sk/ef3/[object%20Object]
+Method: POST
+Headers: {'host': 'eurofly.stefankiss.sk', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0', 'accept': '*/*', 'accept-language': 'en-US,en;q=0.5', 'accept-encoding': 'gzip, deflate, br, zstd', 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8', 'x-requested-with': 'XMLHttpRequest', 'content-length': '46', 'origin': 'https://eurofly.stefankiss.sk', 'alt-used': 'eurofly.stefankiss.sk', 'connection': 'keep-alive', 'referer': 'https://eurofly.stefankiss.sk/ef3/traffic', 'cookie': 'PHPSESSID=779371fbd2ccadc710b314f845727f88', 'sec-fetch-dest': 'empty', 'sec-fetch-mode': 'cors', 'sec-fetch-site': 'same-origin'}
+PostData: type=xhr&offset=-180&method=traffic&let=%22%22
+
+=== REQUEST ===
+URL: https://eurofly.stefankiss.sk/ef3/[object%20Object]
+Method: POST
+Headers: {'host': 'eurofly.stefankiss.sk', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0', 'accept': '*/*', 'accept-language': 'en-US,en;q=0.5', 'accept-encoding': 'gzip, deflate, br, zstd', 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8', 'x-requested-with': 'XMLHttpRequest', 'content-length': '55', 'origin': 'https://eurofly.stefankiss.sk', 'alt-used': 'eurofly.stefankiss.sk', 'connection': 'keep-alive', 'referer': 'https://eurofly.stefankiss.sk/ef3/traffic', 'cookie': 'PHPSESSID=779371fbd2ccadc710b314f845727f88', 'sec-fetch-dest': 'empty', 'sec-fetch-mode': 'cors', 'sec-fetch-site': 'same-origin'}
+PostData: type=xhr&offset=-180&method=current_flights3&let=%22%22
+
+=== RESPONSE ===
+URL: https://fonts.gstatic.com/s/opensans/v44/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTS-muw.woff2
+Status: 200
+Headers: {'accept-ranges': 'bytes', 'access-control-allow-origin': '*', 'content-security-policy-report-only': "require-trusted-types-for 'script'; report-uri https://csp.withgoogle.com/csp/apps-themes", 'cross-origin-resource-policy': 'cross-origin', 'cross-origin-opener-policy': 'same-origin; report-to="apps-themes"', 'report-to': '{"group":"apps-themes", "max_age":2592000, "endpoints":[{"url":"https://csp.withgoogle.com/csp/report-to/apps-themes"}]}', 'timing-allow-origin': '*', 'content-length': '48320', 'x-content-type-options': 'nosniff', 'server': 'sffe', 'x-xss-protection': '0', 'date': 'Tue, 11 Nov 2025 08:07:09 GMT', 'expires': 'Wed, 11 Nov 2026 08:07:09 GMT', 'cache-control': 'public, max-age=31536000', 'age': '540669', 'last-modified': 'Mon, 15 Sep 2025 16:30:41 GMT', 'content-type': 'font/woff2', 'alt-svc': 'h3=":443"; ma=2592000, h3-29=":443"; ma=2592000', 'x-firefox-http3': 'h3'}
+
+=== RESPONSE ===
+URL: https://fonts.gstatic.com/s/opensans/v44/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTS-muw.woff2
+Status: 200
+Headers: {'accept-ranges': 'bytes', 'access-control-allow-origin': '*', 'content-security-policy-report-only': "require-trusted-types-for 'script'; report-uri https://csp.withgoogle.com/csp/apps-themes", 'cross-origin-resource-policy': 'cross-origin', 'cross-origin-opener-policy': 'same-origin; report-to="apps-themes"', 'report-to': '{"group":"apps-themes", "max_age":2592000, "endpoints":[{"url":"https://csp.withgoogle.com/csp/report-to/apps-themes"}]}', 'timing-allow-origin': '*', 'content-length': '48320', 'x-content-type-options': 'nosniff', 'server': 'sffe', 'x-xss-protection': '0', 'date': 'Tue, 11 Nov 2025 08:07:09 GMT', 'expires': 'Wed, 11 Nov 2026 08:07:09 GMT', 'cache-control': 'public, max-age=31536000', 'age': '540669', 'last-modified': 'Mon, 15 Sep 2025 16:30:41 GMT', 'content-type': 'font/woff2', 'alt-svc': 'h3=":443"; ma=2592000, h3-29=":443"; ma=2592000', 'x-firefox-http3': 'h3'}
+
+=== RESPONSE ===
+URL: https://eurofly.stefankiss.sk/ef3/[object%20Object]
+Status: 200
+Headers: {'server': 'openresty', 'date': 'Mon, 17 Nov 2025 14:18:18 GMT', 'content-type': 'text/html; charset=UTF-8', 'vary': 'accept-encoding', 'expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'cache-control': 'no-store, no-cache, must-revalidate', 'pragma': 'no-cache', 'alt-svc': 'h3=":443"; ma=86400', 'content-encoding': 'br', 'x-firefox-http3': 'h3'}
+
+=== RESPONSE ===
+URL: https://fonts.gstatic.com/s/opensans/v44/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTVOmu1aB.woff2
+Status: 200
+Headers: {'accept-ranges': 'bytes', 'access-control-allow-origin': '*', 'content-security-policy-report-only': "require-trusted-types-for 'script'; report-uri https://csp.withgoogle.com/csp/apps-themes", 'cross-origin-resource-policy': 'cross-origin', 'cross-origin-opener-policy': 'same-origin; report-to="apps-themes"', 'report-to': '{"group":"apps-themes", "max_age":2592000, "endpoints":[{"url":"https://csp.withgoogle.com/csp/report-to/apps-themes"}]}', 'timing-allow-origin': '*', 'content-length': '51912', 'x-content-type-options': 'nosniff', 'server': 'sffe', 'x-xss-protection': '0', 'date': 'Tue, 11 Nov 2025 07:47:16 GMT', 'expires': 'Wed, 11 Nov 2026 07:47:16 GMT', 'cache-control': 'public, max-age=31536000', 'age': '541862', 'last-modified': 'Mon, 15 Sep 2025 16:30:38 GMT', 'content-type': 'font/woff2', 'alt-svc': 'h3=":443"; ma=2592000, h3-29=":443"; ma=2592000', 'x-firefox-http3': 'h3'}
