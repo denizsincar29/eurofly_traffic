@@ -103,6 +103,11 @@ class EuroflyClient:
             # Find all center tags with h3 containing pilot links
             pilot_centers = section.find_all_next("center")
             for center in pilot_centers:
+                # Stop if we hit another section header
+                center_text = center.get_text(strip=True)
+                if center_text in ["On earth", "In air"]:
+                    break
+                
                 h3 = center.find("h3")
                 if not h3:
                     continue
@@ -317,6 +322,67 @@ class EuroflyClient:
             List of tuples (pilot_id, pilot_name)
         """
         response = self.session.get(f"{self.BASE_URL}/pilots", params={"name": query})
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.text, "html.parser")
+        
+        # Find all pilot links
+        pilot_links = soup.find_all('a', href=lambda h: h and '/ef3/pilot?pid=' in h)
+        
+        results = []
+        for link in pilot_links:
+            href = link.get('href', '')
+            text = link.get_text(strip=True)
+            
+            # Extract pilot_id from URL
+            pid_match = re.search(r'pid=(\d+)', href)
+            if pid_match:
+                pilot_id = int(pid_match.group(1))
+                results.append((pilot_id, text))
+        
+        return results
+
+    def search_pilots_by_country(self, country_id: int) -> List[tuple]:
+        """Search for pilots by country ID.
+        
+        Args:
+            country_id: Country ID from the pilots page
+            
+        Returns:
+            List of tuples (pilot_id, pilot_name)
+        """
+        response = self.session.get(f"{self.BASE_URL}/pilots", params={"state": str(country_id)})
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.text, "html.parser")
+        
+        # Find all pilot links
+        pilot_links = soup.find_all('a', href=lambda h: h and '/ef3/pilot?pid=' in h)
+        
+        results = []
+        for link in pilot_links:
+            href = link.get('href', '')
+            text = link.get_text(strip=True)
+            
+            # Extract pilot_id from URL
+            pid_match = re.search(r'pid=(\d+)', href)
+            if pid_match:
+                pilot_id = int(pid_match.group(1))
+                results.append((pilot_id, text))
+        
+        return results
+
+    def search_pilots_by_rank(self, rank_level: int) -> List[tuple]:
+        """Search for pilots by rank level.
+        
+        Args:
+            rank_level: Rank level (1=intraining, 2=novices, 3=assistants, 4=copilot, 
+                        5=first pilot, 6=captain, 7=teacher pilot)
+            
+        Returns:
+            List of tuples (pilot_id, pilot_name)
+        """
+        response = self.session.get(f"{self.BASE_URL}/pilots", params={"level": str(rank_level)})
         response.raise_for_status()
         
         soup = BeautifulSoup(response.text, "html.parser")
