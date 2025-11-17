@@ -37,6 +37,8 @@ def display_traffic(traffic, search_prompt=None):
             print(f"\n{pilot.name} ({pilot.callsign}) - {pilot.airline}")
             if pilot.pilot_id:
                 print(f"  Pilot ID: {pilot.pilot_id}")
+            if pilot.flight.description:
+                print(f"  Description: {pilot.flight.description}")
             print(f"  Status: {pilot.flight.status}")
             if pilot.flight.aircraft:
                 print(f"  Aircraft: {pilot.flight.aircraft}")
@@ -53,6 +55,8 @@ def display_traffic(traffic, search_prompt=None):
             print(f"\n{pilot.name} ({pilot.callsign}) - {pilot.airline}")
             if pilot.pilot_id:
                 print(f"  Pilot ID: {pilot.pilot_id}")
+            if pilot.flight.description:
+                print(f"  Description: {pilot.flight.description}")
             print(f"  Status: {pilot.flight.status}")
             if pilot.flight.aircraft:
                 print(f"  Aircraft: {pilot.flight.aircraft}")

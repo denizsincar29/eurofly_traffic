@@ -126,9 +126,13 @@ class EuroflyClient:
                 location_from = None
                 location_to = None
                 last_position = None
+                description = None
 
                 # parse lines
                 for line in flight_lines:
+                    # Check if this is a recognized line type
+                    is_recognized = False
+                    
                     if "with" in line and "passengers" in line:
                         aircraft_part, pax_part = line.split("with", 1)
                         aircraft = aircraft_part.strip()
@@ -136,29 +140,44 @@ class EuroflyClient:
                             passengers = int(pax_part.split("passengers")[0].strip())
                         except ValueError:
                             passengers = 0
-                    if line == "Crashed":
+                        is_recognized = True
+                    elif line == "Crashed":
                         status = "Crashed"
+                        is_recognized = True
                     elif "Standing at" in line:
                         status = "Standing"
                         location_from = line.split("Standing at")[1].strip()
+                        is_recognized = True
                     elif "Rolling at" in line:
                         status = "Rolling"
                         location_from = line.split("Rolling at")[1].strip()
+                        is_recognized = True
                     elif "Taking off at" in line:
                         status = "Taking off"
                         location_from = line.split("Taking off at")[1].strip()
+                        is_recognized = True
                     elif "Took of from" in line:
                         status = "In air"
                         location_from = line.split("Took of from:")[1].strip()
+                        is_recognized = True
                     elif line.startswith("Course:"):
                         location_to = line.split("Course:")[1].strip()
+                        is_recognized = True
                     elif line.startswith("Last known position:"):
                         last_position = line.split("Last known position:")[1].strip()
+                        is_recognized = True
                     elif line.startswith("Flightplan:"):
                         locations = line.split("Flightplan:")[1].strip().split(" - ")
                         if locations:
                             location_from = locations[0]
                             location_to = locations[-1]
+                        is_recognized = True
+                    elif line.startswith("No flightplan"):
+                        is_recognized = True
+                    
+                    # If line is not recognized, it's likely a description
+                    if not is_recognized and line and not description:
+                        description = line
 
                 flight = Flight(
                     aircraft=aircraft,
@@ -166,7 +185,8 @@ class EuroflyClient:
                     status=status,
                     location_from=location_from,
                     location_to=location_to,
-                    last_position=last_position
+                    last_position=last_position,
+                    description=description
                 )
                 pilot = Pilot(
                     name=name,

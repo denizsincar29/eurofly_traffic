@@ -11,6 +11,7 @@ class Flight(BaseModel):
     location_from: Optional[str] = None
     location_to: Optional[str] = None
     last_position: Optional[str] = None
+    description: Optional[str] = None
 
     def __repr__(self):
         return (f"<Flight {self.aircraft}, {self.passengers} pax, status={self.status}, "
