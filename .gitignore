@@ -11,3 +11,4 @@ wheels/
 
 # Cache files
 pilots_cache.json
+.cache.json

@@ -1,89 +1,53 @@
+"""Eurofly client for fetching and parsing traffic data."""
 import httpx
+import json
+import os
 from bs4 import BeautifulSoup
 from typing import List, Optional
 import re
 
-class Flight:
-    def __init__(self, aircraft: str, passengers: int, status: str,
-                 location_from: Optional[str]=None, location_to: Optional[str]=None,
-                 last_position: Optional[str]=None):
-        self.aircraft = aircraft
-        self.passengers = passengers
-        self.status = status
-        self.location_from = location_from
-        self.location_to = location_to
-        self.last_position = last_position
+from .models import Flight, Pilot, PilotProfile, EuroflyTraffic
 
-    def __repr__(self):
-        return (f"<Flight {self.aircraft}, {self.passengers} pax, status={self.status}, "
-                f"from={self.location_from}, to={self.location_to}, last={self.last_position}>")
-
-class PilotProfile:
-    def __init__(self, pilot_id: int, name: str, rank: Optional[str]=None, rank_number: Optional[int]=None,
-                 sex: Optional[str]=None, country: Optional[str]=None, language: Optional[str]=None,
-                 age: Optional[int]=None, overall_rank: Optional[int]=None, registered: Optional[str]=None,
-                 last_login: Optional[str]=None, last_flight: Optional[str]=None, points: Optional[int]=None,
-                 earnings: Optional[int]=None, flights_overall: Optional[int]=None,
-                 total_distance_km: Optional[int]=None, total_flight_time: Optional[str]=None):
-        self.pilot_id = pilot_id
-        self.name = name
-        self.rank = rank
-        self.rank_number = rank_number
-        self.sex = sex
-        self.country = country
-        self.language = language
-        self.age = age
-        self.overall_rank = overall_rank
-        self.registered = registered
-        self.last_login = last_login
-        self.last_flight = last_flight
-        self.points = points
-        self.earnings = earnings
-        self.flights_overall = flights_overall
-        self.total_distance_km = total_distance_km
-        self.total_flight_time = total_flight_time
-
-    def __repr__(self):
-        return f"<PilotProfile {self.name} (ID:{self.pilot_id}), Rank:{self.overall_rank}, Flights:{self.flights_overall}>"
-
-class Pilot:
-    def __init__(self, name: str, callsign: str, airline: str, flight: Flight, pilot_id: Optional[int]=None, client: Optional['EuroflyClient']=None):
-        self.name = name
-        self.callsign = callsign
-        self.airline = airline
-        self.flight = flight
-        self.pilot_id = pilot_id
-        self.client = client
-
-    def get_info(self) -> Optional[PilotProfile]:
-        """Fetch full pilot profile information using the client."""
-        if not self.client:
-            raise ValueError("Client reference not set for this Pilot object")
-        if not self.pilot_id:
-            raise ValueError("Pilot ID not available for this Pilot object")
-        return self.client.get_pilot_profile(self.pilot_id)
-
-    def __repr__(self):
-        return f"<Pilot {self.name} ({self.callsign}) - {self.airline}>"
-
-class EuroflyTraffic:
-    def __init__(self, pilots_on_ground: List[Pilot], pilots_in_air: List[Pilot]):
-        self.pilots_on_ground = pilots_on_ground
-        self.pilots_in_air = pilots_in_air
-
-    def __repr__(self):
-        return f"<EuroflyTraffic ground={len(self.pilots_on_ground)}, air={len(self.pilots_in_air)}>"
 
 class EuroflyClient:
+    """Client for interacting with the Eurofly traffic system."""
+    
     BASE_URL = "https://eurofly.stefankiss.sk/ef3"
+    CACHE_FILE = ".cache.json"
 
-    def __init__(self):
+    def __init__(self, cache_file: Optional[str] = None):
+        """Initialize the Eurofly client.
+        
+        Args:
+            cache_file: Path to cache file. Defaults to '.cache.json' in current directory.
+        """
         self.session = httpx.Client(headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0",
             "X-Requested-With": "XMLHttpRequest"
         })
+        self.cache_file = cache_file or self.CACHE_FILE
+        self._cache = self._load_cache()
+
+    def _load_cache(self) -> dict:
+        """Load pilot profiles from cache file."""
+        if os.path.exists(self.cache_file):
+            try:
+                with open(self.cache_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, IOError):
+                return {}
+        return {}
+
+    def _save_cache(self):
+        """Save pilot profiles to cache file."""
+        try:
+            with open(self.cache_file, 'w', encoding='utf-8') as f:
+                json.dump(self._cache, f, ensure_ascii=False, indent=2)
+        except IOError:
+            pass  # Silent fail on cache write errors
 
     def fetch_traffic_html(self) -> str:
+        """Fetch the current traffic HTML from Eurofly."""
         response = self.session.post(
             f"{self.BASE_URL}/[object%20Object]",
             data={"type": "xhr", "offset": "-180", "method": "current_flights3", "let": '""'}
@@ -92,6 +56,7 @@ class EuroflyClient:
         return response.text
 
     def parse_traffic(self, html: str) -> EuroflyTraffic:
+        """Parse traffic HTML into EuroflyTraffic object."""
         soup = BeautifulSoup(html, "html.parser")
 
         def parse_section(header_text: str):
@@ -126,7 +91,7 @@ class EuroflyClient:
                     if pid_match:
                         pilot_id = int(pid_match.group(1))
 
-                # Разделяем имя, callsign и авиакомпанию
+                # Parse name, callsign and airline
                 if ' - ' in text:
                     name_callsign, airline = text.rsplit(' - ', 1)
                 else:
@@ -136,16 +101,16 @@ class EuroflyClient:
                 else:
                     name, callsign = name_callsign, ""
 
-                # собираем текстовые линии до следующего center, учитывая <br>
+                # Collect text lines until next center, considering <br>
                 flight_lines = []
                 sibling = center.next_sibling
                 while sibling and sibling.name != "center":
-                    # текстовые узлы
+                    # text nodes
                     if isinstance(sibling, str):
                         line = sibling.strip()
                         if line:
                             flight_lines.append(line)
-                    # <br> с текстом
+                    # <br> with text
                     elif sibling.name == "br":
                         next_text = sibling.next_sibling
                         if isinstance(next_text, str):
@@ -162,7 +127,7 @@ class EuroflyClient:
                 location_to = None
                 last_position = None
 
-                # парсим строки
+                # parse lines
                 for line in flight_lines:
                     if "with" in line and "passengers" in line:
                         aircraft_part, pax_part = line.split("with", 1)
@@ -195,17 +160,32 @@ class EuroflyClient:
                             location_from = locations[0]
                             location_to = locations[-1]
 
-                flight = Flight(aircraft, passengers, status, location_from, location_to, last_position)
-                pilot = Pilot(name, callsign, airline, flight, pilot_id=pilot_id, client=self)
+                flight = Flight(
+                    aircraft=aircraft,
+                    passengers=passengers,
+                    status=status,
+                    location_from=location_from,
+                    location_to=location_to,
+                    last_position=last_position
+                )
+                pilot = Pilot(
+                    name=name,
+                    callsign=callsign,
+                    airline=airline,
+                    flight=flight,
+                    pilot_id=pilot_id
+                )
+                pilot.set_client(self)
                 pilots_list.append(pilot)
 
             return pilots_list
 
         pilots_on_ground = parse_section("On earth")
         pilots_in_air = parse_section("In air")
-        return EuroflyTraffic(pilots_on_ground, pilots_in_air)
+        return EuroflyTraffic(pilots_on_ground=pilots_on_ground, pilots_in_air=pilots_in_air)
 
     def get_traffic(self) -> EuroflyTraffic:
+        """Fetch and parse current traffic."""
         html = self.fetch_traffic_html()
         return self.parse_traffic(html)
 
@@ -307,10 +287,36 @@ class EuroflyClient:
         
         return PilotProfile(**profile_data)
 
-    def get_pilot_profile(self, pilot_id: int) -> PilotProfile:
-        """Fetch and parse a pilot's profile."""
+    def get_pilot_profile(self, pilot_id: int, use_cache: bool = True) -> PilotProfile:
+        """Fetch and parse a pilot's profile.
+        
+        Args:
+            pilot_id: The pilot's ID
+            use_cache: If True, try to load from cache first and save to cache. Default True.
+            
+        Returns:
+            PilotProfile object
+        """
+        cache_key = str(pilot_id)
+        
+        # Try to load from cache first if use_cache is True
+        if use_cache and cache_key in self._cache:
+            try:
+                return PilotProfile(**self._cache[cache_key])
+            except Exception:
+                # If cache is invalid, fetch fresh data
+                pass
+        
+        # Fetch from server
         html = self.fetch_pilot_profile_html(pilot_id)
-        return self.parse_pilot_profile(html, pilot_id)
+        profile = self.parse_pilot_profile(html, pilot_id)
+        
+        # Save to cache if use_cache is True
+        if use_cache:
+            self._cache[cache_key] = profile.model_dump()
+            self._save_cache()
+        
+        return profile
 
     def search_pilots(self, query: str) -> List[tuple]:
         """Search for pilots by name.
