@@ -306,3 +306,33 @@ class EuroflyClient:
         """Fetch and parse a pilot's profile."""
         html = self.fetch_pilot_profile_html(pilot_id)
         return self.parse_pilot_profile(html, pilot_id)
+
+    def search_pilots(self, query: str) -> List[tuple]:
+        """Search for pilots by name.
+        
+        Args:
+            query: Search query (pilot name, partial name, etc.)
+            
+        Returns:
+            List of tuples (pilot_id, pilot_name)
+        """
+        response = self.session.get(f"{self.BASE_URL}/pilots", params={"name": query})
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.text, "html.parser")
+        
+        # Find all pilot links
+        pilot_links = soup.find_all('a', href=lambda h: h and '/ef3/pilot?pid=' in h)
+        
+        results = []
+        for link in pilot_links:
+            href = link.get('href', '')
+            text = link.get_text(strip=True)
+            
+            # Extract pilot_id from URL
+            pid_match = re.search(r'pid=(\d+)', href)
+            if pid_match:
+                pilot_id = int(pid_match.group(1))
+                results.append((pilot_id, text))
+        
+        return results
