@@ -47,12 +47,21 @@ class PilotProfile:
         return f"<PilotProfile {self.name} (ID:{self.pilot_id}), Rank:{self.overall_rank}, Flights:{self.flights_overall}>"
 
 class Pilot:
-    def __init__(self, name: str, callsign: str, airline: str, flight: Flight, pilot_id: Optional[int]=None):
+    def __init__(self, name: str, callsign: str, airline: str, flight: Flight, pilot_id: Optional[int]=None, client: Optional['EuroflyClient']=None):
         self.name = name
         self.callsign = callsign
         self.airline = airline
         self.flight = flight
         self.pilot_id = pilot_id
+        self.client = client
+
+    def get_info(self) -> Optional[PilotProfile]:
+        """Fetch full pilot profile information using the client."""
+        if not self.client:
+            raise ValueError("Client reference not set for this Pilot object")
+        if not self.pilot_id:
+            raise ValueError("Pilot ID not available for this Pilot object")
+        return self.client.get_pilot_profile(self.pilot_id)
 
     def __repr__(self):
         return f"<Pilot {self.name} ({self.callsign}) - {self.airline}>"
@@ -182,7 +191,7 @@ class EuroflyClient:
                             location_to = locations[-1]
 
                 flight = Flight(aircraft, passengers, status, location_from, location_to, last_position)
-                pilot = Pilot(name, callsign, airline, flight, pilot_id=pilot_id)
+                pilot = Pilot(name, callsign, airline, flight, pilot_id=pilot_id, client=self)
                 pilots_list.append(pilot)
 
             return pilots_list

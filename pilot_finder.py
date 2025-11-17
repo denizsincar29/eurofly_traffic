@@ -136,26 +136,59 @@ def main():
     # Update cache with current traffic
     finder.update_cache_from_traffic()
     
-    # Find Russian-speaking pilots
+    # Get current traffic to check who's flying
+    print("\nFetching current traffic to find flying Russian-speaking pilots...")
+    traffic = finder.client.get_traffic()
+    
+    # Find Russian-speaking pilots who are currently in the air
     print("\n" + "=" * 80)
-    print("RUSSIAN-SPEAKING PILOTS (Russia, Belarus, or Russian language)")
+    print("CURRENTLY FLYING RUSSIAN-SPEAKING PILOTS")
     print("=" * 80)
     
-    russian_pilots = finder.find_russian_speaking_pilots()
+    flying_russian_pilots = []
     
-    if russian_pilots:
-        print(f"\nFound {len(russian_pilots)} Russian-speaking pilot(s):\n")
-        for i, pilot in enumerate(russian_pilots, 1):
-            print(f"{i}. {pilot['name']}")
-            print(f"   ID: {pilot['id']}")
-            print(f"   Country: {pilot.get('country', 'N/A')}")
-            print(f"   Language: {pilot.get('language', 'N/A')}")
+    for pilot in traffic.pilots_in_air:
+        if pilot.pilot_id:
+            pilot_id_str = str(pilot.pilot_id)
+            if pilot_id_str in finder.cache:
+                pilot_data = finder.cache[pilot_id_str]
+                # Check if pilot is Russian-speaking
+                country = pilot_data.get('country', '').lower()
+                language = pilot_data.get('language', '').lower()
+                
+                is_russian_speaking = (
+                    country in ['russia', 'belarus'] or
+                    'russian' in language
+                )
+                
+                if is_russian_speaking:
+                    flying_russian_pilots.append((pilot, pilot_data))
+    
+    if flying_russian_pilots:
+        print(f"\nFound {len(flying_russian_pilots)} currently flying Russian-speaking pilot(s):\n")
+        for i, (pilot, pilot_data) in enumerate(flying_russian_pilots, 1):
+            print(f"{i}. {pilot.name} ({pilot.callsign}) - {pilot.airline}")
+            print(f"   Pilot ID: {pilot.pilot_id}")
+            print(f"   Country: {pilot_data.get('country', 'N/A')}")
+            print(f"   Language: {pilot_data.get('language', 'N/A')}")
+            print(f"   Flight Status: {pilot.flight.status}")
+            if pilot.flight.aircraft:
+                print(f"   Aircraft: {pilot.flight.aircraft}")
+            if pilot.flight.passengers:
+                print(f"   Passengers: {pilot.flight.passengers}")
+            if pilot.flight.location_from:
+                print(f"   From: {pilot.flight.location_from}")
+            if pilot.flight.location_to:
+                print(f"   To: {pilot.flight.location_to}")
+            if pilot.flight.last_position:
+                print(f"   Last Position: {pilot.flight.last_position}")
             print()
     else:
-        print("\nNo Russian-speaking pilots found in current traffic.")
+        print("\nNo Russian-speaking pilots currently flying.")
     
     print("=" * 80)
     print(f"Total pilots in cache: {len(finder.cache)}")
+    print(f"Total pilots in air: {len(traffic.pilots_in_air)}")
     print("=" * 80)
 
 
