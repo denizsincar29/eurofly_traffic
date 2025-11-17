@@ -14,6 +14,7 @@ def display_traffic(traffic, search_prompt=None):
             return (search_lower in pilot.name.lower() or
                     search_lower in pilot.callsign.lower() or
                     search_lower in pilot.airline.lower() or
+                    (pilot.flight.description and search_lower in pilot.flight.description.lower()) or
                     (pilot.flight.location_from and search_lower in pilot.flight.location_from.lower()) or
                     (pilot.flight.location_to and search_lower in pilot.flight.location_to.lower()) or
                     (pilot.flight.aircraft and search_lower in pilot.flight.aircraft.lower()))
@@ -37,6 +38,8 @@ def display_traffic(traffic, search_prompt=None):
             print(f"\n{pilot.name} ({pilot.callsign}) - {pilot.airline}")
             if pilot.pilot_id:
                 print(f"  Pilot ID: {pilot.pilot_id}")
+            if pilot.flight.description:
+                print(f"  Description: {pilot.flight.description}")
             print(f"  Status: {pilot.flight.status}")
             if pilot.flight.aircraft:
                 print(f"  Aircraft: {pilot.flight.aircraft}")
@@ -53,6 +56,8 @@ def display_traffic(traffic, search_prompt=None):
             print(f"\n{pilot.name} ({pilot.callsign}) - {pilot.airline}")
             if pilot.pilot_id:
                 print(f"  Pilot ID: {pilot.pilot_id}")
+            if pilot.flight.description:
+                print(f"  Description: {pilot.flight.description}")
             print(f"  Status: {pilot.flight.status}")
             if pilot.flight.aircraft:
                 print(f"  Aircraft: {pilot.flight.aircraft}")
