@@ -65,9 +65,10 @@ def print_change(field, old_value, new_value):
 
 def watch_pilot(client, pilot_name):
     """Watch a specific pilot and print changes."""
+    timestamp = datetime.now().strftime('%H:%M:%S')
     print(f"\n{'='*80}")
-    print(f"Watching: {pilot_name}")
-    print(f"Checking every 15 seconds... (Press Ctrl+C to stop)")
+    print(f"[{timestamp}] Watching: {pilot_name}")
+    print(f"[{timestamp}] Checking every 15 seconds... (Press Ctrl+C to stop)")
     print(f"{'='*80}")
     
     # Get initial state
@@ -75,18 +76,21 @@ def watch_pilot(client, pilot_name):
     pilots = traffic.filter_by_name(pilot_name)
     
     if not pilots:
-        print(f"\n❌ No pilot found matching '{pilot_name}'")
+        timestamp = datetime.now().strftime('%H:%M:%S')
+        print(f"\n[{timestamp}] ❌ No pilot found matching '{pilot_name}'")
         return
     
     current_pilot = pilots[0]
     pilot_id = current_pilot.pilot_id
     
     if not pilot_id:
-        print(f"\n⚠️  Warning: Pilot has no ID. Tracking by name only.")
+        timestamp = datetime.now().strftime('%H:%M:%S')
+        print(f"\n[{timestamp}] ⚠️  Warning: Pilot has no ID. Tracking by name only.")
     
     # Display initial status
     print(format_pilot_status(current_pilot))
-    print(f"\n⏰ Started watching at {datetime.now().strftime('%H:%M:%S')}")
+    timestamp = datetime.now().strftime('%H:%M:%S')
+    print(f"\n[{timestamp}] ⏰ Started watching")
     
     check_count = 0
     
@@ -107,8 +111,9 @@ def watch_pilot(client, pilot_name):
                 new_pilot = new_pilots[0] if new_pilots else None
             
             if not new_pilot:
-                print(f"\n[{datetime.now().strftime('%H:%M:%S')}] ⚠️  Pilot went offline")
-                print("Waiting for pilot to come back online...")
+                timestamp = datetime.now().strftime('%H:%M:%S')
+                print(f"\n[{timestamp}] ⚠️  Pilot went offline")
+                print(f"[{timestamp}] Waiting for pilot to come back online...")
                 continue
             
             # Check for changes
@@ -169,8 +174,9 @@ def watch_pilot(client, pilot_name):
 
 def main():
     """Main entry point."""
+    timestamp = datetime.now().strftime('%H:%M:%S')
     print("="*80)
-    print("Eurofly Traffic Watcher")
+    print(f"[{timestamp}] Eurofly Traffic Watcher")
     print("="*80)
     
     # Ask for search prompt
@@ -178,14 +184,16 @@ def main():
     search_prompt = input("> ").strip()
     
     if not search_prompt:
-        print("❌ No search prompt provided. Exiting.")
+        timestamp = datetime.now().strftime('%H:%M:%S')
+        print(f"[{timestamp}] ❌ No search prompt provided. Exiting.")
         sys.exit(1)
     
     # Initialize client
     client = EuroflyClient()
     
     # Search for pilots
-    print(f"\nSearching for '{search_prompt}'...")
+    timestamp = datetime.now().strftime('%H:%M:%S')
+    print(f"\n[{timestamp}] Searching for '{search_prompt}'...")
     traffic = client.get_traffic()
     
     # Try different search methods
@@ -200,41 +208,44 @@ def main():
         pilots = traffic.filter_by_location(search_prompt)
     
     if not pilots:
-        print(f"\n❌ No pilots found matching '{search_prompt}'")
-        print("\nTry searching for:")
-        print("  - Pilot name (e.g., 'Deniz Sincar')")
-        print("  - Callsign (e.g., 'SK903')")
-        print("  - Location (e.g., 'Murmansk')")
+        timestamp = datetime.now().strftime('%H:%M:%S')
+        print(f"\n[{timestamp}] ❌ No pilots found matching '{search_prompt}'")
+        print(f"[{timestamp}] Try searching for:")
+        print(f"[{timestamp}]   - Pilot name (e.g., 'Deniz Sincar')")
+        print(f"[{timestamp}]   - Callsign (e.g., 'SK903')")
+        print(f"[{timestamp}]   - Location (e.g., 'Murmansk')")
         sys.exit(1)
     
     # Display found pilots
+    timestamp = datetime.now().strftime('%H:%M:%S')
     if len(pilots) > 1:
-        print(f"\n✓ Found {len(pilots)} pilots matching '{search_prompt}':")
+        print(f"\n[{timestamp}] ✓ Found {len(pilots)} pilots matching '{search_prompt}':")
         for i, pilot in enumerate(pilots, 1):
-            print(f"  {i}. {pilot.name} ({pilot.callsign}) - {pilot.airline}")
+            print(f"[{timestamp}]   {i}. {pilot.name} ({pilot.callsign}) - {pilot.airline}")
             if pilot.flight.status:
-                print(f"     Status: {pilot.flight.status}")
+                print(f"[{timestamp}]      Status: {pilot.flight.status}")
         
         # Ask which one to watch
         print(f"\nEnter number to watch (1-{len(pilots)}, or press Enter for first):")
         choice = input("> ").strip()
         
+        timestamp = datetime.now().strftime('%H:%M:%S')
         if choice:
             try:
                 index = int(choice) - 1
                 if 0 <= index < len(pilots):
                     selected_pilot = pilots[index]
                 else:
-                    print(f"Invalid choice. Watching first pilot.")
+                    print(f"[{timestamp}] Invalid choice. Watching first pilot.")
                     selected_pilot = pilots[0]
             except ValueError:
-                print(f"Invalid input. Watching first pilot.")
+                print(f"[{timestamp}] Invalid input. Watching first pilot.")
                 selected_pilot = pilots[0]
         else:
             selected_pilot = pilots[0]
     else:
         selected_pilot = pilots[0]
-        print(f"\n✓ Found: {selected_pilot.name} ({selected_pilot.callsign})")
+        print(f"\n[{timestamp}] ✓ Found: {selected_pilot.name} ({selected_pilot.callsign})")
     
     # Start watching
     watch_pilot(client, selected_pilot.name)
