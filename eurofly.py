@@ -402,3 +402,53 @@ class EuroflyClient:
                 results.append((pilot_id, text))
         
         return results
+
+    def search_pilots_advanced(self, name: Optional[str] = None, 
+                               country_id: Optional[int] = None, 
+                               rank_level: Optional[int] = None) -> List[tuple]:
+        """Search for pilots using multiple criteria at once.
+        
+        Args:
+            name: Pilot name or partial name (optional)
+            country_id: Country ID from the pilots page (optional)
+            rank_level: Rank level 1-7 (optional)
+            
+        Returns:
+            List of tuples (pilot_id, pilot_name)
+            
+        Note:
+            When multiple criteria are specified, they are combined (AND operation).
+            The search is performed by passing all parameters to the server.
+        """
+        params = {}
+        if name:
+            params["name"] = name
+        if country_id is not None:
+            params["state"] = str(country_id)
+        if rank_level is not None:
+            params["level"] = str(rank_level)
+        
+        if not params:
+            # No criteria specified, return empty list
+            return []
+        
+        response = self.session.get(f"{self.BASE_URL}/pilots", params=params)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.text, "html.parser")
+        
+        # Find all pilot links
+        pilot_links = soup.find_all('a', href=lambda h: h and '/ef3/pilot?pid=' in h)
+        
+        results = []
+        for link in pilot_links:
+            href = link.get('href', '')
+            text = link.get_text(strip=True)
+            
+            # Extract pilot_id from URL
+            pid_match = re.search(r'pid=(\d+)', href)
+            if pid_match:
+                pilot_id = int(pid_match.group(1))
+                results.append((pilot_id, text))
+        
+        return results
