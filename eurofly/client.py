@@ -4,6 +4,7 @@ import json
 import os
 from bs4 import BeautifulSoup
 from typing import List, Optional
+from datetime import datetime
 import re
 
 from .models import Flight, Pilot, PilotProfile, EuroflyTraffic
