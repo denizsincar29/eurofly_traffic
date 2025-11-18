@@ -88,17 +88,55 @@ eurofly-mcp-server
 
 ### Available MCP Tools
 
+#### Traffic & Pilots
 1. **get_traffic()** - Get current traffic summary
 2. **get_all_pilots()** - List all online pilots with details
 3. **filter_pilots_by_status(status)** - Filter by flight status
 4. **filter_pilots_by_name(name)** - Search pilots by name
 5. **filter_pilots_by_location(location)** - Search by location
 6. **get_pilot_info(pilot_name)** - Get detailed pilot information
-7. **save_traffic_snapshot(filename)** - Save current traffic to cache
-8. **compare_traffic_snapshots(old_filename, new_filename)** - Compare snapshots
-9. **search_pilots(query)** - Search pilot database
-10. **get_pilot_profile(pilot_id)** - Get profile by ID
-11. **list_cache_snapshots()** - List saved snapshots
+7. **search_pilots(query)** - Search pilot database
+8. **get_pilot_profile(pilot_id)** - Get profile by ID
+
+#### Airplanes
+9. **get_all_airplanes(sort_by)** - List all 121 private airplanes
+10. **find_airplanes_by_passengers(min, max)** - Filter by passenger capacity
+11. **find_airplanes_by_price(max_price)** - Find affordable airplanes
+12. **find_airplanes_by_category(category)** - Filter by category (1-7)
+13. **find_smallest_runway_airplane()** - Find planes for small runways
+
+#### Airports
+14. **get_airports(country_id, category)** - List airports (2404 total)
+15. **find_airports_with_runways(min_runways, country_id, category)** - Filter by runway count
+16. **find_airports_by_elevation(max_elevation, country_id, category)** - Filter by elevation
+
+#### Snapshots
+17. **save_traffic_snapshot(filename)** - Save current traffic to cache
+18. **compare_traffic_snapshots(old_filename, new_filename)** - Compare snapshots
+19. **list_cache_snapshots()** - List saved snapshots
+
+### Example Queries for LLMs
+
+With the MCP server running, you can now ask LLM models (Gemini, Claude, etc.) natural language questions:
+
+**Airplane Queries:**
+- "What airplane requires the smallest runway?"
+- "Find me affordable airplanes under $500,000"
+- "Show me large airplanes with 200+ passengers"
+- "What are the fastest airplanes?"
+- "Find small planes for 5 passengers"
+
+**Airport Queries:**
+- "Show me airports in Russia with runways"
+- "Find low-elevation airports below 200 meters"
+- "List airports in category 1"
+- "Which airports are suitable for small planes?"
+
+**Traffic Queries:**
+- "Who is currently flying?"
+- "Show me all pilots taking off right now"
+- "Find pilots at Murmansk airport"
+- "Is Deniz Sincar online?"
 
 ### Example Usage with MCP Client
 
