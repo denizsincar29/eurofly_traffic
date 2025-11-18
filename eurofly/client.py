@@ -96,11 +96,11 @@ class EuroflyClient:
                     if pid_match:
                         pilot_id = int(pid_match.group(1))
 
-                # Parse name, callsign and airline
+                # Parse name, callsign and flight type
                 if ' - ' in text:
-                    name_callsign, airline = text.rsplit(' - ', 1)
+                    name_callsign, flight_type = text.rsplit(' - ', 1)
                 else:
-                    name_callsign, airline = text, ""
+                    name_callsign, flight_type = text, ""
                 if ' ' in name_callsign:
                     name, callsign = name_callsign.rsplit(' ', 1)
                 else:
@@ -232,7 +232,7 @@ class EuroflyClient:
                 pilot = Pilot(
                     name=name,
                     callsign=callsign,
-                    airline=airline,
+                    flight_type=flight_type,
                     flight=flight,
                     pilot_id=pilot_id
                 )

@@ -51,7 +51,7 @@ def get_all_pilots() -> str:
     result += "=" * 80 + "\n\n"
     
     for pilot in traffic.all_pilots:
-        result += f"{pilot.name} ({pilot.callsign}) - {pilot.airline}\n"
+        result += f"{pilot.name} ({pilot.callsign}) - {pilot.get_flight_type_name()} ({pilot.flight_type})\n"
         if pilot.flight.description:
             result += f"  Description: {pilot.flight.description}\n"
         result += f"  Status: {pilot.flight.status}\n"
@@ -110,7 +110,7 @@ def filter_pilots_by_name(name: str) -> str:
     result += "=" * 80 + "\n\n"
     
     for pilot in pilots:
-        result += f"{pilot.name} ({pilot.callsign}) - {pilot.airline}\n"
+        result += f"{pilot.name} ({pilot.callsign}) - {pilot.get_flight_type_name()} ({pilot.flight_type})\n"
         if pilot.flight.description:
             result += f"  Description: {pilot.flight.description}\n"
         result += f"  Status: {pilot.flight.status}\n"
@@ -176,7 +176,7 @@ def get_pilot_info(pilot_name: str) -> str:
     result += "=" * 80 + "\n\n"
     
     result += f"Callsign: {pilot.callsign}\n"
-    result += f"Airline: {pilot.airline}\n"
+    result += f"Flight Type: {pilot.get_flight_type_name()} ({pilot.flight_type})\n"
     
     if pilot.flight.description:
         result += f"Description: {pilot.flight.description}\n"

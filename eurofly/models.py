@@ -49,7 +49,7 @@ class Pilot(BaseModel):
     """Pilot information from traffic data."""
     name: str
     callsign: str
-    airline: str
+    flight_type: str  # Flight type code (FRE, COF, CHF, BCF, BTF, MAF)
     flight: Flight
     pilot_id: Optional[int] = None
     
@@ -73,8 +73,17 @@ class Pilot(BaseModel):
             raise ValueError("Pilot ID not available for this Pilot object")
         return self._client.get_pilot_profile(self.pilot_id, use_cache=use_cache)
 
+    def get_flight_type_name(self) -> str:
+        """Get the full name of the flight type.
+        
+        Returns:
+            Full flight type name (e.g., 'Free flight' for 'FRE') or the code itself if unknown.
+        """
+        from .constants import FLIGHT_TYPES
+        return FLIGHT_TYPES.get(self.flight_type.upper(), self.flight_type)
+
     def __repr__(self):
-        return f"<Pilot {self.name} ({self.callsign}) - {self.airline}>"
+        return f"<Pilot {self.name} ({self.callsign}) - {self.flight_type}>"
 
 
 class EuroflyTraffic(BaseModel):

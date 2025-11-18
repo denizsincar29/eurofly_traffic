@@ -43,8 +43,8 @@ def _display_current_flight(pilot):
     print("=" * 80)
     
     print(f"\nPilot: {pilot.name} ({pilot.callsign})")
-    if pilot.airline:
-        print(f"Airline: {pilot.airline}")
+    if pilot.flight_type:
+        print(f"Flight Type: {pilot.get_flight_type_name()} ({pilot.flight_type})")
     
     if pilot.flight.description:
         print(f"Description: {pilot.flight.description}")
