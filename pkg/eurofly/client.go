@@ -126,31 +126,37 @@ func (c *Client) ParseTraffic(html string) (*Traffic, error) {
 			return pilots
 		}
 
-		// Find all pilot entries after the header
-		foundHeader.NextAll().Each(func(i int, center *goquery.Selection) {
+		// Find all pilot entries after the header until next section
+		stopAtNextSection := false
+		foundHeader.NextAll().EachWithBreak(func(i int, center *goquery.Selection) bool {
 			if center.Is("center") == false {
-				return
+				return true // continue
 			}
 
-			// Check if this is another section header
+			// Check if this is another section header - if so, stop parsing
 			centerText := strings.TrimSpace(center.Text())
 			if centerText == "On earth" || centerText == "In air" {
-				return
+				stopAtNextSection = true
+				return false // break
+			}
+			
+			if stopAtNextSection {
+				return false // break
 			}
 
 			h3 := center.Find("h3")
 			if h3.Length() == 0 {
-				return
+				return true // continue
 			}
 
 			a := h3.Find("a")
 			if a.Length() == 0 {
-				return
+				return true // continue
 			}
 
 			href, exists := a.Attr("href")
 			if !exists || !strings.Contains(href, "/ef3/pilot") {
-				return
+				return true // continue
 			}
 
 			text := strings.TrimSpace(a.Text())
@@ -325,6 +331,7 @@ func (c *Client) ParseTraffic(html string) (*Traffic, error) {
 			}
 			pilot.SetClient(c)
 			pilots = append(pilots, pilot)
+			return true // continue to next pilot
 		})
 
 		return pilots

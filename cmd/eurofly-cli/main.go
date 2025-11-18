@@ -766,35 +766,122 @@ func watchPilot(client *eurofly.Client, favMgr *FavoritesManager, scanner *bufio
 	}
 
 	fmt.Printf("\n🔍 Watching pilot: %s (ID: %d)\n", pilotName, pilotID)
-	fmt.Println("Press Ctrl+C to stop")
+	fmt.Println("Press Enter or 'q' to stop watching")
 	fmt.Println(strings.Repeat("=", 80))
 
+	// Track previous state to only print when something changes
+	var lastFound bool
+	var lastStatus *string
+	var lastPosition *string
+	var lastLocationFrom *string
+	var lastLocationTo *string
+	firstCheck := true
+
+	// Channel to signal when to stop
+	stopChan := make(chan bool)
+	
+	// Goroutine to listen for user input
+	go func() {
+		for {
+			input := readInput(scanner, "")
+			if input == "q" || input == "" {
+				stopChan <- true
+				return
+			}
+		}
+	}()
+
 	// Watch loop - refresh every 15 seconds
-	for {
+	ticker := time.NewTicker(15 * time.Second)
+	defer ticker.Stop()
+
+	// Do initial check
+	checkPilot := func() {
 		traffic, err := client.GetTraffic(context.Background())
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
-			time.Sleep(15 * time.Second)
-			continue
+			return
 		}
 
 		found := false
+		var currentPilot *eurofly.Pilot
 		for i := range traffic.AllPilots() {
 			p := &traffic.AllPilots()[i]
 			if p.PilotID != nil && *p.PilotID == pilotID {
 				found = true
-				fmt.Printf("\n[%s] %s is ONLINE\n", time.Now().Format("15:04:05"), pilotName)
-				displayPilotDetails(p, false, favMgr)
+				currentPilot = p
 				break
 			}
 		}
 
-		if !found {
-			fmt.Printf("\n[%s] %s is OFFLINE\n", time.Now().Format("15:04:05"), pilotName)
+		// Check if status changed
+		statusChanged := false
+		if found != lastFound {
+			statusChanged = true
+		} else if found && currentPilot != nil {
+			if !stringPtrEqual(currentPilot.Flight.Status, lastStatus) ||
+				!stringPtrEqual(currentPilot.Flight.LastPosition, lastPosition) ||
+				!stringPtrEqual(currentPilot.Flight.LocationFrom, lastLocationFrom) ||
+				!stringPtrEqual(currentPilot.Flight.LocationTo, lastLocationTo) {
+				statusChanged = true
+			}
 		}
 
-		time.Sleep(15 * time.Second)
+		// Print only on first check or when something changed
+		if firstCheck || statusChanged {
+			if found {
+				fmt.Printf("\n[%s] %s is ONLINE\n", time.Now().Format("15:04:05"), pilotName)
+				displayPilotDetails(currentPilot, false, favMgr)
+				
+				// Update last state
+				lastStatus = copyStringPtr(currentPilot.Flight.Status)
+				lastPosition = copyStringPtr(currentPilot.Flight.LastPosition)
+				lastLocationFrom = copyStringPtr(currentPilot.Flight.LocationFrom)
+				lastLocationTo = copyStringPtr(currentPilot.Flight.LocationTo)
+			} else {
+				fmt.Printf("\n[%s] %s is OFFLINE\n", time.Now().Format("15:04:05"), pilotName)
+				lastStatus = nil
+				lastPosition = nil
+				lastLocationFrom = nil
+				lastLocationTo = nil
+			}
+			lastFound = found
+			firstCheck = false
+		}
 	}
+
+	// Initial check
+	checkPilot()
+
+	// Watch loop
+	for {
+		select {
+		case <-stopChan:
+			fmt.Println("\nStopped watching pilot")
+			return
+		case <-ticker.C:
+			checkPilot()
+		}
+	}
+}
+
+// Helper functions for string pointer comparison
+func stringPtrEqual(a, b *string) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+	return *a == *b
+}
+
+func copyStringPtr(s *string) *string {
+	if s == nil {
+		return nil
+	}
+	copy := *s
+	return &copy
 }
 
 func browseAirplanes(client *eurofly.Client, scanner *bufio.Scanner) {
