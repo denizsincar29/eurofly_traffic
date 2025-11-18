@@ -2,12 +2,16 @@
 import httpx
 import json
 import os
+import logging
 from bs4 import BeautifulSoup
 from typing import List, Optional
 from datetime import datetime
 import re
 
 from .models import Flight, Pilot, PilotProfile, EuroflyTraffic
+
+# Configure logger for this module
+logger = logging.getLogger(__name__)
 
 
 class EuroflyClient:
@@ -129,7 +133,8 @@ class EuroflyClient:
                 last_position = None
                 description = None
 
-                # parse lines
+                # parse lines - track unrecognized lines for description
+                unrecognized_lines_for_desc = []
                 for line in flight_lines:
                     # Check if this is a recognized line type
                     is_recognized = False
@@ -157,6 +162,10 @@ class EuroflyClient:
                         status = "Taking off"
                         location_from = line.split("Taking off at")[1].strip()
                         is_recognized = True
+                    elif "Landing at" in line:
+                        status = "Landing"
+                        location_to = line.split("Landing at")[1].strip()
+                        is_recognized = True
                     elif "Took of from" in line:
                         status = "In air"
                         location_from = line.split("Took of from:")[1].strip()
@@ -176,9 +185,40 @@ class EuroflyClient:
                     elif line.startswith("No flightplan"):
                         is_recognized = True
                     
-                    # If line is not recognized, it's likely a description
-                    if not is_recognized and line and not description:
-                        description = line
+                    # Collect unrecognized lines - description is always the last line
+                    if not is_recognized and line:
+                        unrecognized_lines_for_desc.append(line)
+                
+                # Description is the last unrecognized line
+                if unrecognized_lines_for_desc:
+                    description = unrecognized_lines_for_desc[-1]
+
+                # Debug logging when status is None
+                if status is None:
+                    # Get the HTML snippet for this pilot entry (compact)
+                    pilot_html = str(center)
+                    temp_sibling = center.next_sibling
+                    html_context = pilot_html
+                    for _ in range(10):  # Get up to 10 sibling elements for context
+                        if temp_sibling and temp_sibling.name != "center":
+                            if hasattr(temp_sibling, 'name'):
+                                html_context += str(temp_sibling)
+                            elif isinstance(temp_sibling, str):
+                                html_context += temp_sibling
+                            temp_sibling = temp_sibling.next_sibling
+                        else:
+                            break
+                    
+                    # Create a concise, informative debug message
+                    reason = "Missing status line (e.g., 'Standing at', 'Landing at', 'Took of from', etc.)"
+                    if unrecognized_lines_for_desc:
+                        reason += f" - Check if unrecognized line should be a status: {unrecognized_lines_for_desc}"
+                    
+                    logger.debug(
+                        f"⚠️  Status=None for {name} ({callsign}) | Reason: {reason}\n"
+                        f"    All lines: {flight_lines}\n"
+                        f"    HTML: {html_context[:500]}{'...' if len(html_context) > 500 else ''}"
+                    )
 
                 flight = Flight(
                     aircraft=aircraft,
