@@ -9,10 +9,6 @@ dependencies = [
     "httpx>=0.28.1",
     "pydantic>=2.0.0",
     "mcp[cli]>=1.0.0",
-]
-
-[project.optional-dependencies]
-gui = [
     "wxPython>=4.2.0",
 ]
 

@@ -77,9 +77,13 @@ python3 eurofly_cli.py
 #### Watching a Pilot
 
 1. Choose option 6 (Watch pilot)
-2. Enter the pilot ID
+2. Enter the pilot **name or ID**:
+   - If you enter a number, it's treated as a pilot ID
+   - If you enter text, it searches for pilots by name
+   - If multiple matches are found, you can select from a list
 3. See real-time updates every 15 seconds
 4. Press Ctrl+C to stop watching
+5. Watching automatically stops if the pilot goes offline
 
 #### Viewing a Pilot Profile
 

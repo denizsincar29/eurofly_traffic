@@ -41,15 +41,18 @@ A comprehensive Python library with command-line and graphical interfaces for in
 git clone https://github.com/denizsincar29/eurofly_traffic.git
 cd eurofly_traffic
 
-# Install dependencies
-pip install httpx beautifulsoup4 pydantic
-
-# For GUI support (optional)
-pip install wxPython
+# Install all dependencies (includes wxPython for GUI)
+pip install -e .
 
 # Or with uv
-uv pip install httpx beautifulsoup4 pydantic
-uv add wxPython  # For GUI
+uv pip install -e .
+```
+
+**Note:** wxPython is now included as a main dependency and will be installed automatically. If you encounter issues on Linux, you may need to install system dependencies first:
+
+```bash
+# Linux only (if needed)
+sudo apt-get install libgtk-3-dev python3-dev
 ```
 
 ## Quick Start

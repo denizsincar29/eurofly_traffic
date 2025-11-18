@@ -448,20 +448,80 @@ def manage_favorites(client: EuroflyClient, favorites_mgr: FavoritesManager):
 
 def watch_pilot(client: EuroflyClient, favorites_mgr: FavoritesManager):
     """Watch a specific pilot."""
-    pilot_id = input("\nEnter pilot ID to watch: ").strip()
+    pilot_input = input("\nEnter pilot name or ID to watch: ").strip()
     
-    if not pilot_id.isdigit():
-        print("Invalid pilot ID")
+    if not pilot_input:
+        print("No input provided")
         return
     
-    pilot_id = int(pilot_id)
+    pilot_id = None
+    pilot_name = None
     
-    # Get pilot name
-    try:
-        profile = client.get_pilot_profile(pilot_id)
-        pilot_name = profile.name
-    except:
-        pilot_name = f"Pilot {pilot_id}"
+    # Check if input is a digit (ID)
+    if pilot_input.isdigit():
+        pilot_id = int(pilot_input)
+        # Get pilot name from profile
+        try:
+            profile = client.get_pilot_profile(pilot_id)
+            pilot_name = profile.name
+        except:
+            pilot_name = f"Pilot {pilot_id}"
+    else:
+        # Input is a name, search for the pilot
+        pilot_name = pilot_input
+        print(f"\nSearching for pilot: {pilot_name}...")
+        
+        # Search in current traffic first
+        traffic = client.get_traffic()
+        matches = [p for p in traffic.all_pilots if pilot_name.lower() in p.name.lower()]
+        
+        if not matches:
+            print(f"Pilot '{pilot_name}' not found in current traffic.")
+            print("Searching in pilot database...")
+            
+            # Search in database
+            try:
+                results = client.search_pilots_by_name(pilot_name)
+                if results:
+                    print(f"\nFound {len(results)} pilot(s) in database:")
+                    for i, profile in enumerate(results[:5], 1):
+                        print(f"{i}. {profile.name} (ID: {profile.pilot_id})")
+                    
+                    selection = input("\nEnter number to watch, or press Enter to cancel: ").strip()
+                    if selection.isdigit() and 1 <= int(selection) <= len(results[:5]):
+                        selected_profile = results[int(selection) - 1]
+                        pilot_id = selected_profile.pilot_id
+                        pilot_name = selected_profile.name
+                    else:
+                        print("Cancelled")
+                        return
+                else:
+                    print(f"No pilots found matching '{pilot_name}'")
+                    return
+            except Exception as e:
+                print(f"Error searching for pilot: {e}")
+                return
+        elif len(matches) == 1:
+            pilot_id = matches[0].pilot_id
+            pilot_name = matches[0].name
+            print(f"Found: {pilot_name} (ID: {pilot_id})")
+        else:
+            print(f"\nFound {len(matches)} pilots currently flying:")
+            for i, p in enumerate(matches[:10], 1):
+                print(f"{i}. {p.name} (ID: {p.pilot_id}) - {p.callsign}")
+            
+            selection = input("\nEnter number to watch, or press Enter to cancel: ").strip()
+            if selection.isdigit() and 1 <= int(selection) <= len(matches[:10]):
+                selected_pilot = matches[int(selection) - 1]
+                pilot_id = selected_pilot.pilot_id
+                pilot_name = selected_pilot.name
+            else:
+                print("Cancelled")
+                return
+    
+    if not pilot_id:
+        print("Could not determine pilot ID")
+        return
     
     print(f"\nWatching {pilot_name} (ID: {pilot_id})")
     print("Refreshing every 15 seconds. Press Ctrl+C to stop.\n")

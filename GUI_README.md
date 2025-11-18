@@ -37,30 +37,29 @@ A native wxPython GUI application for monitoring Eurofly flight traffic. Fully a
 
 ## Installation
 
-### 1. Install wxPython
+wxPython is now included as a main dependency, so it will be installed automatically when you install the library.
 
-**Windows:**
+### Install the library
+
 ```bash
-pip install wxPython
+pip install -e .
 ```
+
+Or with uv:
+```bash
+uv pip install -e .
+```
+
+**Note:** If you encounter issues with wxPython installation on Linux, you may need to install system dependencies:
 
 **Linux (Ubuntu/Debian):**
 ```bash
-sudo apt-get install python3-wxgtk4.0
-# OR
+sudo apt-get install libgtk-3-dev python3-dev
 pip install wxPython
 ```
 
-**macOS:**
-```bash
-pip install wxPython
-```
-
-### 2. Install the library with GUI support
-
-```bash
-pip install -e ".[gui]"
-```
+**macOS/Windows:**
+wxPython should install without additional dependencies.
 
 ## Usage
 
