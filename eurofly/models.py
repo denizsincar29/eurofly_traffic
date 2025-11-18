@@ -269,3 +269,42 @@ class EuroflyTraffic(BaseModel):
         with open(filepath, 'r', encoding='utf-8') as f:
             data = json.load(f)
         return cls(**data)
+
+
+class Airplane(BaseModel):
+    """Information about a private airplane in Eurofly."""
+    row: int
+    name: str
+    category: int
+    type: str
+    propulsion_type: str
+    engines: int
+    passengers: int
+    speed_kmh: int
+    range_km: int
+    cruising_altitude_m: int
+    price: int
+    qualification_price: int
+    
+    def __repr__(self):
+        return f"<Airplane {self.name}, {self.passengers} pax, {self.speed_kmh} km/h, ${self.price}>"
+
+
+class Airport(BaseModel):
+    """Information about an airport in Eurofly."""
+    name: str
+    code: Optional[str] = None
+    type: Optional[str] = None  # private, commercial, military, etc.
+    country: Optional[str] = None
+    region: Optional[str] = None  # e.g., "Europe", "Asia"
+    category: Optional[int] = None
+    difficulty: Optional[int] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    elevation: Optional[int] = None
+    runways: Optional[int] = None
+    approach_frequency: Optional[float] = None
+    runway_length: Optional[int] = None  # in meters
+    
+    def __repr__(self):
+        return f"<Airport {self.name}, Cat:{self.category}, Runways:{self.runways}, Elevation:{self.elevation}m>"
