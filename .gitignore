@@ -12,3 +12,7 @@ wheels/
 # Cache files
 pilots_cache.json
 .cache.json
+
+# Go binaries
+eurofly-cli
+eurofly-mcp-server

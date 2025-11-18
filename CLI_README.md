@@ -1,6 +1,6 @@
-# Eurofly CLI
+# Eurofly CLI (Go)
 
-Comprehensive command-line tool for Eurofly traffic monitoring, pilot management, and airplane/airport search.
+Comprehensive command-line tool for Eurofly traffic monitoring, pilot management, and airplane/airport search. Written in idiomatic Go.
 
 ## Features
 
@@ -60,7 +60,11 @@ Browse and filter the airport database (2404 airports):
 ### Starting the CLI
 
 ```bash
-python3 eurofly_cli.py
+# After building
+./eurofly-cli
+
+# Or if installed to $GOPATH/bin
+eurofly-cli
 ```
 
 ### Main Menu Options

@@ -1,6 +1,6 @@
-# Eurofly Traffic MCP Server
+# Eurofly Traffic MCP Server (Go)
 
-An MCP (Model Context Protocol) server that exposes all Eurofly Traffic library capabilities.
+An MCP (Model Context Protocol) server that exposes all Eurofly Traffic library capabilities. Written in idiomatic Go.
 
 ## Features
 
@@ -18,54 +18,40 @@ An MCP (Model Context Protocol) server that exposes all Eurofly Traffic library 
 
 ### Filtering Capabilities
 
-The library now includes powerful filtering methods:
+The library includes powerful filtering methods:
 
-```python
-from eurofly import EuroflyClient
+```go
+import (
+    "context"
+    "github.com/denizsincar29/eurofly_traffic/pkg/eurofly"
+)
 
-client = EuroflyClient()
-traffic = client.get_traffic()
+client := eurofly.NewClient("")
+traffic, _ := client.GetTraffic(context.Background())
 
-# Filter by status
-standing = traffic.filter_standing()
-rolling = traffic.filter_rolling()
-taking_off = traffic.filter_taking_off()
-in_air = traffic.filter_in_air()
+// Filter by status
+standing := traffic.FilterByStatus("Standing")
+inAir := traffic.FilterByStatus("In air")
 
-# Filter by position
-at_departure = traffic.filter_at_departure()
-at_destination = traffic.filter_at_destination()
-en_route = traffic.filter_en_route()
-
-# Filter by name/callsign/location
-pilots = traffic.filter_by_name("Deniz")
-pilots = traffic.filter_by_callsign("SK903")
-pilots = traffic.filter_by_location("Murmansk")
+// Filter by name/callsign/location
+pilots := traffic.FilterByName("Deniz")
+pilots = traffic.FilterByCallsign("SK903")
+pilots = traffic.FilterByLocation("Murmansk")
 ```
 
 ### Caching & Comparison
 
-```python
-# Save snapshot
-traffic.to_cache("snapshot1.json")
+```go
+// Save snapshot
+traffic.ToCache("snapshot1.json")
 
-# Load snapshot
-from eurofly.models import EuroflyTraffic
-old_traffic = EuroflyTraffic.from_cache("snapshot1.json")
+// Load snapshot
+oldTraffic, _ := eurofly.FromCache("snapshot1.json")
 
-# Compare with current
-new_traffic = client.get_traffic()
-diff = new_traffic.compare(old_traffic)
+// Get current traffic for comparison
+newTraffic, _ := client.GetTraffic(context.Background())
 
-print(f"New pilots: {len(diff['new_pilots'])}")
-print(f"Departed: {len(diff['departed_pilots'])}")
-print(f"Changed: {len(diff['changed_pilots'])}")
-
-# Example monitoring Deniz Sincar's status
-for item in diff['changed_pilots']:
-    if item['pilot'].name == "Deniz Sincar":
-        print(f"Changes: {item['changes']}")
-        # Output: {'last_position': {'old': 'Murmansk', 'new': 'Helsinki'}}
+// Compare snapshots (implement compare method if needed)
 ```
 
 ## MCP Server Setup
@@ -73,16 +59,20 @@ for item in diff['changed_pilots']:
 ### Installation
 
 ```bash
-pip install eurofly-traffic
+# Build from source
+go build -o eurofly-mcp-server ./cmd/eurofly-mcp-server
+
+# Or install to $GOPATH/bin
+go install ./cmd/eurofly-mcp-server
 ```
 
 ### Running the Server
 
 ```bash
-# Run using Python
-python mcp_server.py
+# Run the server
+./eurofly-mcp-server
 
-# Or use the entry point (after installation)
+# Or if installed to $GOPATH/bin
 eurofly-mcp-server
 ```
 
