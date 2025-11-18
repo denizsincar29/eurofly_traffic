@@ -5,11 +5,81 @@ Pilot Search Tool - Search for pilots using various criteria
 from eurofly import EuroflyClient, COUNTRIES, COUNTRY_NAME_TO_ID, RANKS
 
 
-def _display_full_profile(profile):
+def _check_if_flying(client, pilot_id, pilot_name):
+    """Check if a pilot is currently flying and return their flight info.
+    
+    Args:
+        client: EuroflyClient instance
+        pilot_id: Pilot's ID for exact matching
+        pilot_name: Pilot's name for fallback matching
+        
+    Returns:
+        Pilot object if flying, None otherwise
+    """
+    try:
+        traffic = client.get_traffic()
+        
+        # Try to find by pilot_id first (most reliable)
+        if pilot_id:
+            for pilot in traffic.all_pilots:
+                if pilot.pilot_id == pilot_id:
+                    return pilot
+        
+        # Fallback to name matching (partial match)
+        pilots = traffic.filter_by_name(pilot_name)
+        if pilots:
+            return pilots[0]  # Return the first match
+        
+        return None
+    except Exception as e:
+        print(f"Error checking flight status: {e}")
+        return None
+
+
+def _display_current_flight(pilot):
+    """Display current flight information for a pilot."""
+    print("\n" + "=" * 80)
+    print("🛫 CURRENTLY FLYING")
+    print("=" * 80)
+    
+    print(f"\nPilot: {pilot.name} ({pilot.callsign})")
+    if pilot.airline:
+        print(f"Airline: {pilot.airline}")
+    
+    if pilot.flight.description:
+        print(f"Description: {pilot.flight.description}")
+    
+    print(f"\nFlight Status: {pilot.flight.status}")
+    
+    if pilot.flight.aircraft:
+        print(f"Aircraft: {pilot.flight.aircraft}")
+    
+    if pilot.flight.passengers:
+        print(f"Passengers: {pilot.flight.passengers}")
+    
+    if pilot.flight.location_from:
+        print(f"From: {pilot.flight.location_from}")
+    
+    if pilot.flight.location_to:
+        print(f"To: {pilot.flight.location_to}")
+    
+    if pilot.flight.last_position:
+        print(f"Current Position: {pilot.flight.last_position}")
+    
+    print("=" * 80)
+
+
+def _display_full_profile(profile, client=None, pilot_name=None):
     """Display full pilot profile information."""
     print("\n" + "=" * 80)
     print(f"PILOT PROFILE: {profile.name}")
     print("=" * 80)
+    
+    # Check if pilot is currently flying
+    if client:
+        flying_pilot = _check_if_flying(client, profile.pilot_id, pilot_name or profile.name)
+        if flying_pilot:
+            _display_current_flight(flying_pilot)
     
     if profile.bio:
         print(f"\nBio: {profile.bio}")
@@ -94,7 +164,7 @@ def search_by_name():
                         pilot_id, pilot_name = results[index]
                         print(f"\nFetching full profile for {pilot_name}...")
                         profile = client.get_pilot_profile(pilot_id)
-                        _display_full_profile(profile)
+                        _display_full_profile(profile, client, pilot_name)
                     else:
                         print("Invalid pilot number.")
                 except ValueError:
@@ -164,7 +234,7 @@ def search_by_country():
                         pilot_id, pilot_name = display_results[index]
                         print(f"\nFetching full profile for {pilot_name}...")
                         profile = client.get_pilot_profile(pilot_id)
-                        _display_full_profile(profile)
+                        _display_full_profile(profile, client, pilot_name)
                     else:
                         print("Invalid pilot number.")
                 except ValueError:
@@ -215,7 +285,7 @@ def search_by_rank():
                         pilot_id, pilot_name = display_results[index]
                         print(f"\nFetching full profile for {pilot_name}...")
                         profile = client.get_pilot_profile(pilot_id)
-                        _display_full_profile(profile)
+                        _display_full_profile(profile, client, pilot_name)
                     else:
                         print("Invalid pilot number.")
                 except ValueError:
@@ -300,7 +370,7 @@ def search_advanced():
                         pilot_id, pilot_name = display_results[index]
                         print(f"\nFetching full profile for {pilot_name}...")
                         profile = client.get_pilot_profile(pilot_id)
-                        _display_full_profile(profile)
+                        _display_full_profile(profile, client, pilot_name)
                     else:
                         print("Invalid pilot number.")
                 except ValueError:
