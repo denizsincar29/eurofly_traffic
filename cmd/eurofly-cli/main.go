@@ -828,9 +828,10 @@ func watchPilot(client *eurofly.Client, favMgr *FavoritesManager, scanner *bufio
 		}
 
 		// Print only on first check or when something changed
-		if firstCheck || statusChanged {
+		if firstCheck {
+			// First check - show initial status
 			if found {
-				fmt.Printf("\n[%s] %s is ONLINE\n", time.Now().Format("15:04:05"), pilotName)
+				fmt.Printf("\n[%s] %s is currently online\n", time.Now().Format("15:04:05"), pilotName)
 				displayPilotDetails(currentPilot, false, favMgr)
 				
 				// Update last state
@@ -839,14 +840,114 @@ func watchPilot(client *eurofly.Client, favMgr *FavoritesManager, scanner *bufio
 				lastLocationFrom = copyStringPtr(currentPilot.Flight.LocationFrom)
 				lastLocationTo = copyStringPtr(currentPilot.Flight.LocationTo)
 			} else {
-				fmt.Printf("\n[%s] %s is OFFLINE\n", time.Now().Format("15:04:05"), pilotName)
+				fmt.Printf("\n[%s] %s is currently offline\n", time.Now().Format("15:04:05"), pilotName)
+			}
+			lastFound = found
+			firstCheck = false
+		} else if statusChanged {
+			// Something changed - show the changes
+			timestamp := time.Now().Format("15:04:05")
+			
+			if !lastFound && found {
+				// Pilot came online
+				fmt.Printf("\n[%s] 🟢 %s came online!\n", timestamp, pilotName)
+				displayPilotDetails(currentPilot, false, favMgr)
+			} else if lastFound && !found {
+				// Pilot went offline
+				fmt.Printf("\n[%s] 🔴 %s went offline\n", timestamp, pilotName)
+			} else if found && currentPilot != nil {
+				// Pilot is online, but something changed
+				fmt.Printf("\n[%s] 📍 %s status update:\n", timestamp, pilotName)
+				
+				// Check what changed and display human-readable messages
+				if !stringPtrEqual(currentPilot.Flight.Status, lastStatus) {
+					oldStatus := getStringValue(lastStatus)
+					newStatus := getStringValue(currentPilot.Flight.Status)
+					
+					if newStatus == "" {
+						fmt.Printf("  ⚠️  Status became unknown\n")
+					} else if oldStatus == "" {
+						fmt.Printf("  ✈️  Status is now: %s\n", newStatus)
+					} else {
+						// Humanize status transitions
+						switch {
+						case oldStatus == "Standing" && newStatus == "Rolling":
+							fmt.Printf("  🛫 Started taxiing\n")
+						case oldStatus == "Standing" && newStatus == "Taking off":
+							fmt.Printf("  🚀 Taking off!\n")
+						case oldStatus == "Rolling" && newStatus == "Taking off":
+							fmt.Printf("  🚀 Taking off!\n")
+						case oldStatus == "Taking off" && newStatus == "In air":
+							fmt.Printf("  ✈️  Took off and is now flying\n")
+						case (oldStatus == "Standing" || oldStatus == "Rolling") && newStatus == "In air":
+							fmt.Printf("  ✈️  Took off and is now flying\n")
+						case oldStatus == "In air" && newStatus == "Landing":
+							fmt.Printf("  🛬 Landing\n")
+						case oldStatus == "In air" && newStatus == "Standing":
+							fmt.Printf("  🏁 Landed\n")
+						case oldStatus == "Landing" && newStatus == "Standing":
+							fmt.Printf("  🏁 Landed and parked\n")
+						case newStatus == "Crashed":
+							fmt.Printf("  💥 Crashed!\n")
+						default:
+							fmt.Printf("  Status changed: %s → %s\n", oldStatus, newStatus)
+						}
+					}
+				}
+				
+				if !stringPtrEqual(currentPilot.Flight.LastPosition, lastPosition) {
+					oldPos := getStringValue(lastPosition)
+					newPos := getStringValue(currentPilot.Flight.LastPosition)
+					
+					if newPos == "" {
+						fmt.Printf("  ⚠️  Position became unknown\n")
+					} else if oldPos == "" {
+						fmt.Printf("  📍 Position: %s\n", newPos)
+					} else {
+						fmt.Printf("  📍 Moved to: %s (from %s)\n", newPos, oldPos)
+					}
+				}
+				
+				if !stringPtrEqual(currentPilot.Flight.LocationFrom, lastLocationFrom) {
+					oldFrom := getStringValue(lastLocationFrom)
+					newFrom := getStringValue(currentPilot.Flight.LocationFrom)
+					
+					if newFrom == "" {
+						fmt.Printf("  ⚠️  Departure airport became unknown\n")
+					} else if oldFrom == "" {
+						fmt.Printf("  🛫 Departing from: %s\n", newFrom)
+					} else {
+						fmt.Printf("  🛫 Departure changed: %s → %s\n", oldFrom, newFrom)
+					}
+				}
+				
+				if !stringPtrEqual(currentPilot.Flight.LocationTo, lastLocationTo) {
+					oldTo := getStringValue(lastLocationTo)
+					newTo := getStringValue(currentPilot.Flight.LocationTo)
+					
+					if newTo == "" {
+						fmt.Printf("  ⚠️  Destination became unknown\n")
+					} else if oldTo == "" {
+						fmt.Printf("  🛬 Destination: %s\n", newTo)
+					} else {
+						fmt.Printf("  🛬 Destination changed: %s → %s\n", oldTo, newTo)
+					}
+				}
+			}
+			
+			// Update last state
+			if found && currentPilot != nil {
+				lastStatus = copyStringPtr(currentPilot.Flight.Status)
+				lastPosition = copyStringPtr(currentPilot.Flight.LastPosition)
+				lastLocationFrom = copyStringPtr(currentPilot.Flight.LocationFrom)
+				lastLocationTo = copyStringPtr(currentPilot.Flight.LocationTo)
+			} else {
 				lastStatus = nil
 				lastPosition = nil
 				lastLocationFrom = nil
 				lastLocationTo = nil
 			}
 			lastFound = found
-			firstCheck = false
 		}
 	}
 
@@ -882,6 +983,13 @@ func copyStringPtr(s *string) *string {
 	}
 	copy := *s
 	return &copy
+}
+
+func getStringValue(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }
 
 func browseAirplanes(client *eurofly.Client, scanner *bufio.Scanner) {
