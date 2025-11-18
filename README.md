@@ -1,6 +1,6 @@
-# Eurofly Traffic - Python Library, CLI, and GUI
+# Eurofly Traffic - Python Library and CLI
 
-A comprehensive Python library with command-line and graphical interfaces for interacting with Eurofly (https://eurofly.stefankiss.sk) traffic data, pilot information, airplanes, and airports.
+A comprehensive Python library with command-line interface for interacting with Eurofly (https://eurofly.stefankiss.sk) traffic data, pilot information, airplanes, and airports.
 
 ## Features
 
@@ -8,26 +8,19 @@ A comprehensive Python library with command-line and graphical interfaces for in
 - **Traffic Monitoring**: Parse and filter current traffic (pilots online)
 - **Pilot Profiles**: Fetch detailed pilot information including bios, stats, and rankings
 - **Pilot Search**: Search pilots by name, country, rank, or advanced criteria
-- **Airplanes**: Parse and filter private airplanes by passengers, price, category
-- **Airports**: Parse and filter airports by country, runways, elevation, category
+- **Airplanes**: Parse and filter private airplanes (121 total) by passengers, price, category
+- **Airports**: Parse and filter airports (2404 total) by country, runways, elevation, category
 - **Flight Types**: Proper classification of flight types (Free, Company, Charter, etc.)
-
-### GUI Application (`eurofly_gui.py`) 🆕
-- **Native Desktop Interface**: wxPython-based native GUI
-- **Screenreader Accessible**: Fully accessible for blind/visually impaired users
-- **Tabbed Interface**: Traffic, Search, and Favorites in separate tabs
-- **Real-time Updates**: Refresh button for latest data
-- **Context Menus**: Right-click for quick actions
-- **Detailed Profiles**: View complete pilot information in dialogs
-- **Cross-platform**: Works on Windows, Linux, and macOS
 
 ### CLI Tool (`eurofly_cli.py`)
 - **Interactive Menu**: User-friendly menu-driven interface
 - **Traffic Viewing**: View all pilots online, search by term, or filter by favorites
 - **Pilot Search**: Search pilot database with multiple criteria
 - **Favorites Management**: Add/remove favorite pilots and track when they're online
-- **Pilot Watcher**: Real-time monitoring of specific pilots (15-second refresh)
+- **Pilot Watcher**: Real-time monitoring of specific pilots (15-second refresh), accepts name or ID
 - **Detailed Profiles**: View complete pilot profiles with current flight status
+- **Airplane Search**: Browse and filter 121 airplanes by passengers, price, category
+- **Airport Search**: Browse and filter 2404 airports by country, runways, elevation, category
 
 ### MCP Server (`mcp_server.py`)
 - **LLM Integration**: Expose Eurofly data through Model Context Protocol
@@ -41,29 +34,14 @@ A comprehensive Python library with command-line and graphical interfaces for in
 git clone https://github.com/denizsincar29/eurofly_traffic.git
 cd eurofly_traffic
 
-# Install all dependencies (includes wxPython for GUI)
+# Install dependencies
 pip install -e .
 
 # Or with uv
 uv pip install -e .
 ```
 
-**Note:** wxPython is now included as a main dependency and will be installed automatically. If you encounter issues on Linux, you may need to install system dependencies first:
-
-```bash
-# Linux only (if needed)
-sudo apt-get install libgtk-3-dev python3-dev
-```
-
 ## Quick Start
-
-### Using the GUI (Recommended for desktop)
-
-```bash
-python3 eurofly_gui.py
-```
-
-See [GUI_README.md](GUI_README.md) for detailed GUI documentation and accessibility features.
 
 ### Using the CLI
 

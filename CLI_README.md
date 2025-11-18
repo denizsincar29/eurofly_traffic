@@ -1,6 +1,6 @@
 # Eurofly CLI
 
-Comprehensive command-line tool for Eurofly traffic monitoring and pilot management.
+Comprehensive command-line tool for Eurofly traffic monitoring, pilot management, and airplane/airport search.
 
 ## Features
 
@@ -34,10 +34,26 @@ View detailed pilot information including:
 
 ### 5. Pilot Watcher
 Watch a specific pilot in real-time:
+- **Accepts pilot name or ID**: Enter "Deniz" or "510"
 - Refreshes every 15 seconds
 - Shows current status, aircraft, location, route
 - Automatically stops if pilot goes offline
 - Press Ctrl+C to stop manually
+
+### 6. Airplane Search
+Browse and filter the airplane database (121 planes):
+- **View all airplanes**: See all available planes
+- **Filter by passengers**: Find planes with specific passenger capacity
+- **Filter by price**: Find planes within budget
+- **Filter by category**: Find planes by category (1-7)
+
+### 7. Airport Search
+Browse and filter the airport database (2404 airports):
+- **View all airports**: See all available airports
+- **Filter by country**: Find airports in specific country
+- **Filter by runway length**: Find airports with minimum runways
+- **Filter by elevation**: Find airports below maximum elevation
+- **Filter by category**: Find airports by category (1-5)
 
 ## Usage
 

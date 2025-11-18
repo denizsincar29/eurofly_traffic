@@ -554,6 +554,197 @@ def watch_pilot(client: EuroflyClient, favorites_mgr: FavoritesManager):
         print("\n\nStopped watching")
 
 
+def search_airplanes_menu(client):
+    """Airplane search menu."""
+    while True:
+        print("\n" + "=" * 80)
+        print("AIRPLANE SEARCH")
+        print("=" * 80)
+        print("\n1. View all airplanes")
+        print("2. Filter by passengers")
+        print("3. Filter by price")
+        print("4. Filter by category")
+        print("5. Back to main menu")
+        
+        choice = input("\nSelect option: ").strip()
+        
+        if choice == "1":
+            print("\nFetching airplanes...")
+            airplanes = client.get_airplanes()
+            print(f"\nFound {len(airplanes)} airplanes:")
+            print("=" * 80)
+            for airplane in airplanes:
+                print(f"\n{airplane.name}")
+                print(f"  Category: {airplane.category} | Passengers: {airplane.passengers}")
+                print(f"  Speed: {airplane.speed} km/h | Range: {airplane.range} km")
+                print(f"  Price: ${airplane.price:,}" if airplane.price else "  Price: N/A")
+        
+        elif choice == "2":
+            min_pax = input("Minimum passengers (or press Enter for 0): ").strip()
+            min_pax = int(min_pax) if min_pax else 0
+            max_pax = input("Maximum passengers (or press Enter for no limit): ").strip()
+            max_pax = int(max_pax) if max_pax else None
+            
+            print("\nFetching airplanes...")
+            airplanes = client.get_airplanes()
+            filtered = client.filter_airplanes_by_passengers(airplanes, min_pax, max_pax)
+            print(f"\nFound {len(filtered)} airplanes with {min_pax}-{max_pax or 'unlimited'} passengers:")
+            print("=" * 80)
+            for airplane in filtered:
+                print(f"\n{airplane.name} - {airplane.passengers} passengers")
+                print(f"  Speed: {airplane.speed} km/h | Range: {airplane.range} km")
+                print(f"  Price: ${airplane.price:,}" if airplane.price else "  Price: N/A")
+        
+        elif choice == "3":
+            max_price = input("Maximum price (USD): ").strip()
+            if not max_price:
+                print("Price required")
+                continue
+            max_price = int(max_price)
+            
+            print("\nFetching airplanes...")
+            airplanes = client.get_airplanes()
+            filtered = client.filter_airplanes_by_price(airplanes, max_price)
+            print(f"\nFound {len(filtered)} airplanes under ${max_price:,}:")
+            print("=" * 80)
+            for airplane in filtered:
+                print(f"\n{airplane.name} - ${airplane.price:,}")
+                print(f"  Passengers: {airplane.passengers} | Speed: {airplane.speed} km/h")
+        
+        elif choice == "4":
+            category = input("Category (1-7): ").strip()
+            if not category or not category.isdigit() or int(category) not in range(1, 8):
+                print("Invalid category (must be 1-7)")
+                continue
+            category = int(category)
+            
+            print("\nFetching airplanes...")
+            airplanes = client.get_airplanes()
+            filtered = client.filter_airplanes_by_category(airplanes, category)
+            print(f"\nFound {len(filtered)} airplanes in category {category}:")
+            print("=" * 80)
+            for airplane in filtered:
+                print(f"\n{airplane.name}")
+                print(f"  Passengers: {airplane.passengers} | Speed: {airplane.speed} km/h")
+                print(f"  Price: ${airplane.price:,}" if airplane.price else "  Price: N/A")
+        
+        elif choice == "5":
+            break
+        
+        else:
+            print("\nInvalid option")
+
+
+def search_airports_menu(client):
+    """Airport search menu."""
+    while True:
+        print("\n" + "=" * 80)
+        print("AIRPORT SEARCH")
+        print("=" * 80)
+        print("\n1. View all airports")
+        print("2. Filter by country")
+        print("3. Filter by runway length")
+        print("4. Filter by elevation")
+        print("5. Filter by category")
+        print("6. Back to main menu")
+        
+        choice = input("\nSelect option: ").strip()
+        
+        if choice == "1":
+            print("\nFetching airports...")
+            airports = client.get_airports()
+            print(f"\nFound {len(airports)} airports:")
+            print("=" * 80)
+            for airport in airports[:20]:  # Show first 20
+                print(f"\n{airport.name} ({airport.code})")
+                print(f"  Country: {airport.country} | Elevation: {airport.elevation}m")
+                if airport.runways:
+                    print(f"  Runways: {airport.runways}")
+            if len(airports) > 20:
+                print(f"\n... and {len(airports) - 20} more airports")
+        
+        elif choice == "2":
+            print("\nAvailable countries:")
+            country_list = sorted(COUNTRIES.items(), key=lambda x: x[1])
+            for i, (cid, cname) in enumerate(country_list[:20], 1):
+                print(f"  {cid:3d}. {cname}")
+            print("  ... (and more)")
+            
+            country_id = input("\nEnter country ID: ").strip()
+            if not country_id or not country_id.isdigit():
+                print("Invalid country ID")
+                continue
+            country_id = int(country_id)
+            
+            print("\nFetching airports...")
+            airports = client.get_airports(country_id=country_id)
+            country_name = COUNTRIES.get(country_id, f"Country {country_id}")
+            print(f"\nFound {len(airports)} airports in {country_name}:")
+            print("=" * 80)
+            for airport in airports:
+                print(f"\n{airport.name} ({airport.code})")
+                print(f"  Elevation: {airport.elevation}m" + (f" | Runways: {airport.runways}" if airport.runways else ""))
+        
+        elif choice == "3":
+            min_runways = input("Minimum number of runways: ").strip()
+            if not min_runways or not min_runways.isdigit():
+                print("Invalid number")
+                continue
+            min_runways = int(min_runways)
+            
+            print("\nFetching airports...")
+            airports = client.get_airports()
+            filtered = client.filter_airports_by_runway_length(airports, min_runways)
+            print(f"\nFound {len(filtered)} airports with {min_runways}+ runways:")
+            print("=" * 80)
+            for airport in filtered[:50]:  # Show first 50
+                print(f"\n{airport.name} ({airport.code}) - {airport.country}")
+                print(f"  Runways: {airport.runways} | Elevation: {airport.elevation}m")
+            if len(filtered) > 50:
+                print(f"\n... and {len(filtered) - 50} more airports")
+        
+        elif choice == "4":
+            max_elev = input("Maximum elevation (meters): ").strip()
+            if not max_elev or not max_elev.isdigit():
+                print("Invalid elevation")
+                continue
+            max_elev = int(max_elev)
+            
+            print("\nFetching airports...")
+            airports = client.get_airports()
+            filtered = client.filter_airports_by_elevation(airports, max_elev)
+            print(f"\nFound {len(filtered)} airports below {max_elev}m elevation:")
+            print("=" * 80)
+            for airport in filtered[:50]:  # Show first 50
+                print(f"\n{airport.name} ({airport.code}) - {airport.country}")
+                print(f"  Elevation: {airport.elevation}m" + (f" | Runways: {airport.runways}" if airport.runways else ""))
+            if len(filtered) > 50:
+                print(f"\n... and {len(filtered) - 50} more airports")
+        
+        elif choice == "5":
+            category = input("Category (1-5): ").strip()
+            if not category or not category.isdigit() or int(category) not in range(1, 6):
+                print("Invalid category (must be 1-5)")
+                continue
+            category = int(category)
+            
+            print("\nFetching airports...")
+            airports = client.get_airports(category=category)
+            print(f"\nFound {len(airports)} airports in category {category}:")
+            print("=" * 80)
+            for airport in airports[:50]:  # Show first 50
+                print(f"\n{airport.name} ({airport.code}) - {airport.country}")
+                print(f"  Elevation: {airport.elevation}m" + (f" | Runways: {airport.runways}" if airport.runways else ""))
+            if len(airports) > 50:
+                print(f"\n... and {len(airports) - 50} more airports")
+        
+        elif choice == "6":
+            break
+        
+        else:
+            print("\nInvalid option")
+
+
 def main_menu():
     """Main menu."""
     client = EuroflyClient()
@@ -569,7 +760,9 @@ def main_menu():
         print("4. Search pilots")
         print("5. Manage favorites")
         print("6. Watch pilot")
-        print("7. Exit")
+        print("7. Search airplanes")
+        print("8. Search airports")
+        print("9. Exit")
         
         choice = input("\nSelect option: ").strip()
         
@@ -594,6 +787,12 @@ def main_menu():
             watch_pilot(client, favorites_mgr)
         
         elif choice == "7":
+            search_airplanes_menu(client)
+        
+        elif choice == "8":
+            search_airports_menu(client)
+        
+        elif choice == "9":
             print("\nGoodbye!")
             break
         
