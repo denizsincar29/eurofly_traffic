@@ -1,18 +1,20 @@
-# Eurofly Traffic - Python Library and CLI
+# Eurofly Traffic - Go Library and CLI
 
-A comprehensive Python library with command-line interface for interacting with Eurofly (https://eurofly.stefankiss.sk) traffic data, pilot information, airplanes, and airports.
+A comprehensive Go library with command-line interface for interacting with Eurofly (https://eurofly.stefankiss.sk) traffic data, pilot information, airplanes, and airports.
 
 ## Features
 
-### Library (`eurofly` package)
+### Library (`pkg/eurofly`)
 - **Traffic Monitoring**: Parse and filter current traffic (pilots online)
 - **Pilot Profiles**: Fetch detailed pilot information including bios, stats, and rankings
 - **Pilot Search**: Search pilots by name, country, rank, or advanced criteria
 - **Airplanes**: Parse and filter private airplanes (121 total) by passengers, price, category
 - **Airports**: Parse and filter airports (2404 total) by country, runways, elevation, category
 - **Flight Types**: Proper classification of flight types (Free, Company, Charter, etc.)
+- **Context Support**: All HTTP operations support context for cancellation and timeout
+- **Type Safety**: Strongly typed models with proper JSON serialization
 
-### CLI Tool (`eurofly_cli.py`)
+### CLI Tool (`eurofly-cli`)
 - **Interactive Menu**: User-friendly menu-driven interface
 - **Traffic Viewing**: View all pilots online, search by term, or filter by favorites
 - **Pilot Search**: Search pilot database with multiple criteria
@@ -22,9 +24,9 @@ A comprehensive Python library with command-line interface for interacting with 
 - **Airplane Search**: Browse and filter 121 airplanes by passengers, price, category
 - **Airport Search**: Browse and filter 2404 airports by country, runways, elevation, category
 
-### MCP Server (`mcp_server.py`)
+### MCP Server (`eurofly-mcp-server`)
 - **LLM Integration**: Expose Eurofly data through Model Context Protocol
-- **19 Tools**: Traffic, pilots, airplanes, airports, and more
+- **17 Tools**: Traffic, pilots, airplanes, airports, and more
 - **Natural Language**: Ask questions like "What airplane requires the smallest runway?"
 
 ## Installation
@@ -34,11 +36,13 @@ A comprehensive Python library with command-line interface for interacting with 
 git clone https://github.com/denizsincar29/eurofly_traffic.git
 cd eurofly_traffic
 
-# Install dependencies
-pip install -e .
+# Build the binaries
+go build -o eurofly-cli ./cmd/eurofly-cli
+go build -o eurofly-mcp-server ./cmd/eurofly-mcp-server
 
-# Or with uv
-uv pip install -e .
+# Or install to $GOPATH/bin
+go install ./cmd/eurofly-cli
+go install ./cmd/eurofly-mcp-server
 ```
 
 ## Quick Start
@@ -46,39 +50,67 @@ uv pip install -e .
 ### Using the CLI
 
 ```bash
-python3 eurofly_cli.py
+./eurofly-cli
 ```
 
 See [CLI_README.md](CLI_README.md) for detailed CLI documentation.
 
 ### Using the Library
 
-```python
-from eurofly import EuroflyClient
+```go
+package main
 
-# Initialize client
-client = EuroflyClient()
+import (
+    "context"
+    "fmt"
+    "github.com/denizsincar29/eurofly_traffic/pkg/eurofly"
+)
 
-# Get current traffic
-traffic = client.get_traffic()
-print(f"Pilots online: {len(traffic.all_pilots)}")
-
-# Search for a pilot
-results = client.search_pilots("John")
-for pilot_id, pilot_name in results:
-    print(f"{pilot_name} (ID: {pilot_id})")
-
-# Get pilot profile
-profile = client.get_pilot_profile(510)
-print(f"{profile.name} - {profile.bio}")
-
-# Get airplanes
-airplanes = client.get_airplanes()
-small_planes = client.filter_airplanes_by_passengers(airplanes, max_passengers=10)
-
-# Get airports
-airports = client.get_airports(country_id=151)  # Russia
-with_runways = client.filter_airports_by_runway_length(airports, min_runways=1)
+func main() {
+    // Initialize client
+    client := eurofly.NewClient("")
+    ctx := context.Background()
+    
+    // Get current traffic
+    traffic, err := client.GetTraffic(ctx)
+    if err != nil {
+        panic(err)
+    }
+    fmt.Printf("Pilots online: %d\n", len(traffic.AllPilots()))
+    
+    // Search for a pilot
+    results, err := client.SearchPilots(ctx, "John")
+    if err != nil {
+        panic(err)
+    }
+    for _, result := range results {
+        fmt.Printf("%s (ID: %d)\n", result.Name, result.ID)
+    }
+    
+    // Get pilot profile
+    profile, err := client.GetPilotProfile(510, true)
+    if err != nil {
+        panic(err)
+    }
+    fmt.Printf("%s - %s\n", profile.Name, *profile.Bio)
+    
+    // Get airplanes
+    airplanes, err := client.GetAirplanes(ctx, nil)
+    if err != nil {
+        panic(err)
+    }
+    maxPax := 10
+    smallPlanes := eurofly.FilterAirplanesByPassengers(airplanes, 1, &maxPax)
+    
+    // Get airports
+    countryID := 151 // Russia
+    airports, err := client.GetAirports(ctx, &countryID, nil)
+    if err != nil {
+        panic(err)
+    }
+    withRunways := eurofly.FilterAirportsByRunwayLength(airports, 1)
+    fmt.Printf("Airports with runways: %d\n", len(withRunways))
+}
 ```
 
 ## Documentation
@@ -88,72 +120,68 @@ with_runways = client.filter_airports_by_runway_length(airports, min_runways=1)
 
 ## Library API
 
-### EuroflyClient
+### Client
 
 Main client for interacting with Eurofly:
 
 **Traffic**
-- `get_traffic()` - Get current traffic (all pilots online)
+- `GetTraffic(ctx)` - Get current traffic (all pilots online)
 
 **Pilots**
-- `search_pilots(name)` - Search pilots by name
-- `search_pilots_by_country(country_id)` - Search by country
-- `search_pilots_by_rank(rank_id)` - Search by rank
-- `search_pilots_advanced(name, country, rank)` - Advanced search
-- `get_pilot_profile(pilot_id, use_cache)` - Get detailed pilot profile
+- `SearchPilots(ctx, name)` - Search pilots by name
+- `SearchPilotsByCountry(ctx, country_id)` - Search by country
+- `SearchPilotsByRank(ctx, rank_id)` - Search by rank
+- `SearchPilotsAdvanced(ctx, name, country, rank)` - Advanced search
+- `GetPilotProfile(pilot_id, use_cache)` - Get detailed pilot profile
 
 **Airplanes**
-- `get_airplanes(sort_by)` - Get all 121 private airplanes
-- `filter_airplanes_by_passengers(airplanes, min, max)` - Filter by capacity
-- `filter_airplanes_by_price(airplanes, max_price)` - Filter by budget
-- `filter_airplanes_by_category(airplanes, category)` - Filter by category
+- `GetAirplanes(ctx, sort_by)` - Get all 121 private airplanes
+- `FilterAirplanesByPassengers(airplanes, min, max)` - Filter by capacity
+- `FilterAirplanesByPrice(airplanes, max_price)` - Filter by budget
+- `FilterAirplanesByCategory(airplanes, category)` - Filter by category
 
 **Airports**
-- `get_airports(country_id, category)` - Get airports (2404 total)
-- `filter_airports_by_runway_length(airports, min_runways)` - Filter by runways
-- `filter_airports_by_category(airports, category)` - Filter by category
-- `filter_airports_by_elevation(airports, max_elevation)` - Filter by elevation
+- `GetAirports(ctx, country_id, category)` - Get airports (2404 total)
+- `FilterAirportsByRunwayLength(airports, min_runways)` - Filter by runways
+- `FilterAirportsByCategory(airports, category)` - Filter by category
+- `FilterAirportsByElevation(airports, max_elevation)` - Filter by elevation
 
 ### Models
 
 - `Pilot` - Pilot with current flight info
 - `PilotProfile` - Detailed pilot profile with stats
 - `Flight` - Flight information (aircraft, status, route, etc.)
-- `EuroflyTraffic` - Traffic container with filtering
+- `Traffic` - Traffic container with filtering methods
 - `Airplane` - Airplane specifications
 - `Airport` - Airport information
 
 ### Constants
 
-- `COUNTRIES` - Country ID to name mapping
-- `RANKS` - Rank ID to name mapping
-- `FLIGHT_TYPES` - Flight type codes to names (FRE, COF, CHF, BCF, BTF, MAF)
-
-## Examples
-
-See the `examples/` directory for complete examples:
-- `debug_logging_example.py` - Debug logging for traffic parsing
-- `airplanes_airports_example.py` - Airplane and airport filtering
+- `Countries` - Country ID to name mapping
+- `Ranks` - Rank ID to name mapping
+- `FlightTypes` - Flight type codes to names (FRE, COF, CHF, BCF, BTF, MAF)
 
 ## Development
 
+### Building from Source
+
+```bash
+# Build both binaries
+go build -o eurofly-cli ./cmd/eurofly-cli
+go build -o eurofly-mcp-server ./cmd/eurofly-mcp-server
+
+# Run tests
+go test ./pkg/eurofly/...
+
+# Format code
+go fmt ./...
+```
+
 ### Debug Logging
 
-Enable debug logging to see traffic parsing details:
-
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
-client = EuroflyClient()
-traffic = client.get_traffic()
+The library logs warnings when parsing issues occur. You'll see messages like:
 ```
-
-When a status line isn't recognized, you'll see:
-```
-⚠️  Status=None for Test Pilot (SK123) | Reason: Missing status line...
-    All lines: ['Boeing 737 with 200 passengers', 'Awaiting clearance', ...]
-    HTML: <center><h3>...
+⚠️  Status=nil for Test Pilot (SK123) | Flight lines: [...]
 ```
 
 ## License
