@@ -75,14 +75,15 @@ def _display_full_profile(profile, client=None, pilot_name=None):
     print(f"PILOT PROFILE: {profile.name}")
     print("=" * 80)
     
+    # Show bio first, right after the header for maximum visibility
+    if profile.bio:
+        print(f"\n📝 Bio: {profile.bio}")
+    
     # Check if pilot is currently flying
     if client:
         flying_pilot = _check_if_flying(client, profile.pilot_id, pilot_name or profile.name)
         if flying_pilot:
             _display_current_flight(flying_pilot)
-    
-    if profile.bio:
-        print(f"\nBio: {profile.bio}")
     
     print(f"\nPilot ID: {profile.pilot_id}")
     
