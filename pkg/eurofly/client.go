@@ -185,23 +185,24 @@ func (c *Client) ParseTraffic(html string) (*Traffic, error) {
 			}
 
 			// Collect flight information lines
+			// The HTML structure is: <center>pilot info</center><br>line1<br>line2<br>...<br><br><center>next pilot</center>
+			// The HTML parser converts <br> to text nodes with data "br", and actual text is in element nodes
 			var flightLines []string
 			node := center.Get(0)
+			
+			// Start from the node after </center>
 			for sibling := node.NextSibling; sibling != nil; sibling = sibling.NextSibling {
-				if sibling.Type == 1 && sibling.Data == "center" { // Element node
+				// Stop when we hit another center tag (text node with data "center")
+				if sibling.Type == 3 && sibling.Data == "center" {
 					break
 				}
-				if sibling.Type == 3 { // Text node
+				
+				// Text content is in Type 1 nodes (element nodes)
+				if sibling.Type == 1 {
 					line := strings.TrimSpace(sibling.Data)
+					// Skip empty lines
 					if line != "" {
 						flightLines = append(flightLines, line)
-					}
-				} else if sibling.Type == 1 && sibling.Data == "br" { // BR element
-					if sibling.NextSibling != nil && sibling.NextSibling.Type == 3 {
-						line := strings.TrimSpace(sibling.NextSibling.Data)
-						if line != "" {
-							flightLines = append(flightLines, line)
-						}
 					}
 				}
 			}
