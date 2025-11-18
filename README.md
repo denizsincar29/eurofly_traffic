@@ -1,6 +1,6 @@
-# Eurofly Traffic - Python Library and CLI
+# Eurofly Traffic - Python Library, CLI, and GUI
 
-A comprehensive Python library and command-line tool for interacting with Eurofly (https://eurofly.stefankiss.sk) traffic data, pilot information, airplanes, and airports.
+A comprehensive Python library with command-line and graphical interfaces for interacting with Eurofly (https://eurofly.stefankiss.sk) traffic data, pilot information, airplanes, and airports.
 
 ## Features
 
@@ -11,6 +11,15 @@ A comprehensive Python library and command-line tool for interacting with Eurofl
 - **Airplanes**: Parse and filter private airplanes by passengers, price, category
 - **Airports**: Parse and filter airports by country, runways, elevation, category
 - **Flight Types**: Proper classification of flight types (Free, Company, Charter, etc.)
+
+### GUI Application (`eurofly_gui.py`) 🆕
+- **Native Desktop Interface**: wxPython-based native GUI
+- **Screenreader Accessible**: Fully accessible for blind/visually impaired users
+- **Tabbed Interface**: Traffic, Search, and Favorites in separate tabs
+- **Real-time Updates**: Refresh button for latest data
+- **Context Menus**: Right-click for quick actions
+- **Detailed Profiles**: View complete pilot information in dialogs
+- **Cross-platform**: Works on Windows, Linux, and macOS
 
 ### CLI Tool (`eurofly_cli.py`)
 - **Interactive Menu**: User-friendly menu-driven interface
@@ -35,11 +44,23 @@ cd eurofly_traffic
 # Install dependencies
 pip install httpx beautifulsoup4 pydantic
 
+# For GUI support (optional)
+pip install wxPython
+
 # Or with uv
 uv pip install httpx beautifulsoup4 pydantic
+uv add wxPython  # For GUI
 ```
 
 ## Quick Start
+
+### Using the GUI (Recommended for desktop)
+
+```bash
+python3 eurofly_gui.py
+```
+
+See [GUI_README.md](GUI_README.md) for detailed GUI documentation and accessibility features.
 
 ### Using the CLI
 

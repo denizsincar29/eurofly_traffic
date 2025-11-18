@@ -11,5 +11,11 @@ dependencies = [
     "mcp[cli]>=1.0.0",
 ]
 
+[project.optional-dependencies]
+gui = [
+    "wxPython>=4.2.0",
+]
+
 [project.scripts]
 eurofly-mcp-server = "mcp_server:mcp.run"
+eurofly-gui = "eurofly_gui:main"
