@@ -265,10 +265,26 @@ class EuroflyClient:
         if not content_div:
             raise ValueError("Could not find content div in pilot profile page")
         
+        # Extract bio from h2 tag after "About the pilot"
+        bio = None
+        h2_tags = content_div.find_all('h2')
+        for h2 in h2_tags:
+            text = h2.get_text()  # Don't strip yet to preserve line breaks
+            if 'About the pilot' in text:
+                # Bio is the rest of the text after "About the pilot"
+                lines = [line.strip() for line in text.split('\n') if line.strip()]
+                # Remove "About the pilot" line
+                filtered_lines = [line for line in lines if line != 'About the pilot']
+                if filtered_lines:
+                    bio = '\n'.join(filtered_lines)
+                break
+        
         text = content_div.get_text(separator='\n', strip=True)
         lines = [line.strip() for line in text.split('\n') if line.strip()]
         
         profile_data = {'pilot_id': pilot_id}
+        if bio:
+            profile_data['bio'] = bio
         
         # Extract pilot name and info from first line
         if lines:

@@ -24,6 +24,7 @@ class PilotProfile(BaseModel):
     """Detailed profile information for a pilot."""
     pilot_id: int
     name: str
+    bio: Optional[str] = None  # Pilot's bio/description
     rank: Optional[str] = None
     rank_number: Optional[int] = None
     sex: Optional[str] = None

@@ -5,6 +5,65 @@ Pilot Search Tool - Search for pilots using various criteria
 from eurofly import EuroflyClient, COUNTRIES, COUNTRY_NAME_TO_ID, RANKS
 
 
+def _display_full_profile(profile):
+    """Display full pilot profile information."""
+    print("\n" + "=" * 80)
+    print(f"PILOT PROFILE: {profile.name}")
+    print("=" * 80)
+    
+    if profile.bio:
+        print(f"\nBio: {profile.bio}")
+    
+    print(f"\nPilot ID: {profile.pilot_id}")
+    
+    if profile.rank:
+        print(f"Rank: {profile.rank}", end="")
+        if profile.rank_number:
+            print(f" (#{profile.rank_number})", end="")
+        print()
+    
+    if profile.overall_rank:
+        print(f"Overall Rank: #{profile.overall_rank}")
+    
+    if profile.sex:
+        print(f"Sex: {profile.sex}")
+    
+    if profile.country:
+        print(f"Country: {profile.country}")
+    
+    if profile.language:
+        print(f"Language: {profile.language}")
+    
+    if profile.age:
+        print(f"Age: {profile.age} years old")
+    
+    if profile.registered:
+        print(f"\nRegistered: {profile.registered}")
+    
+    if profile.last_login:
+        print(f"Last Login: {profile.last_login}")
+    
+    if profile.last_flight:
+        print(f"Last Flight: {profile.last_flight}")
+    
+    if profile.flights_overall:
+        print(f"\nFlights Overall: {profile.flights_overall}")
+    
+    if profile.total_distance_km:
+        print(f"Total Distance: {profile.total_distance_km:,} km")
+    
+    if profile.total_flight_time:
+        print(f"Total Flight Time: {profile.total_flight_time}")
+    
+    if profile.points:
+        print(f"\nPoints: {profile.points:,}")
+    
+    if profile.earnings:
+        print(f"Earnings: ${profile.earnings:,.2f}")
+    
+    print("=" * 80)
+
+
 def search_by_name():
     """Search pilots by name."""
     print("\n" + "=" * 80)
@@ -24,6 +83,22 @@ def search_by_name():
         print(f"\nFound {len(results)} pilot(s):\n")
         for i, (pilot_id, pilot_name) in enumerate(results, 1):
             print(f"{i}. {pilot_name} (ID: {pilot_id})")
+        
+        # Ask if user wants to see details
+        if len(results) > 0:
+            choice = input("\nEnter pilot number to see full details (or press Enter to skip): ").strip()
+            if choice:
+                try:
+                    index = int(choice) - 1
+                    if 0 <= index < len(results):
+                        pilot_id, pilot_name = results[index]
+                        print(f"\nFetching full profile for {pilot_name}...")
+                        profile = client.get_pilot_profile(pilot_id)
+                        _display_full_profile(profile)
+                    else:
+                        print("Invalid pilot number.")
+                except ValueError:
+                    print("Invalid input.")
     else:
         print("\nNo pilots found.")
 
@@ -72,11 +147,28 @@ def search_by_country():
     results = client.search_pilots_by_country(country_id)
     
     if results:
+        display_results = results[:50]  # Limit to 50 for display
         print(f"\nFound {len(results)} pilot(s):\n")
-        for i, (pilot_id, pilot_name) in enumerate(results[:50], 1):  # Limit to 50
+        for i, (pilot_id, pilot_name) in enumerate(display_results, 1):
             print(f"{i}. {pilot_name} (ID: {pilot_id})")
         if len(results) > 50:
             print(f"\n... and {len(results) - 50} more pilots")
+        
+        # Ask if user wants to see details
+        if len(display_results) > 0:
+            choice = input("\nEnter pilot number to see full details (or press Enter to skip): ").strip()
+            if choice:
+                try:
+                    index = int(choice) - 1
+                    if 0 <= index < len(display_results):
+                        pilot_id, pilot_name = display_results[index]
+                        print(f"\nFetching full profile for {pilot_name}...")
+                        profile = client.get_pilot_profile(pilot_id)
+                        _display_full_profile(profile)
+                    else:
+                        print("Invalid pilot number.")
+                except ValueError:
+                    print("Invalid input.")
     else:
         print("\nNo pilots found.")
 
@@ -106,11 +198,28 @@ def search_by_rank():
     results = client.search_pilots_by_rank(rank_level)
     
     if results:
+        display_results = results[:50]  # Limit to 50 for display
         print(f"\nFound {len(results)} pilot(s):\n")
-        for i, (pilot_id, pilot_name) in enumerate(results[:50], 1):  # Limit to 50
+        for i, (pilot_id, pilot_name) in enumerate(display_results, 1):
             print(f"{i}. {pilot_name} (ID: {pilot_id})")
         if len(results) > 50:
             print(f"\n... and {len(results) - 50} more pilots")
+        
+        # Ask if user wants to see details
+        if len(display_results) > 0:
+            choice = input("\nEnter pilot number to see full details (or press Enter to skip): ").strip()
+            if choice:
+                try:
+                    index = int(choice) - 1
+                    if 0 <= index < len(display_results):
+                        pilot_id, pilot_name = display_results[index]
+                        print(f"\nFetching full profile for {pilot_name}...")
+                        profile = client.get_pilot_profile(pilot_id)
+                        _display_full_profile(profile)
+                    else:
+                        print("Invalid pilot number.")
+                except ValueError:
+                    print("Invalid input.")
     else:
         print("\nNo pilots found.")
 
@@ -174,11 +283,28 @@ def search_advanced():
     results = client.search_pilots_advanced(name=name, country_id=country_id, rank_level=rank_level)
     
     if results:
+        display_results = results[:50]  # Limit to 50 for display
         print(f"\nFound {len(results)} pilot(s):\n")
-        for i, (pilot_id, pilot_name) in enumerate(results[:50], 1):
+        for i, (pilot_id, pilot_name) in enumerate(display_results, 1):
             print(f"{i}. {pilot_name} (ID: {pilot_id})")
         if len(results) > 50:
             print(f"\n... and {len(results) - 50} more pilots")
+        
+        # Ask if user wants to see details
+        if len(display_results) > 0:
+            choice = input("\nEnter pilot number to see full details (or press Enter to skip): ").strip()
+            if choice:
+                try:
+                    index = int(choice) - 1
+                    if 0 <= index < len(display_results):
+                        pilot_id, pilot_name = display_results[index]
+                        print(f"\nFetching full profile for {pilot_name}...")
+                        profile = client.get_pilot_profile(pilot_id)
+                        _display_full_profile(profile)
+                    else:
+                        print("Invalid pilot number.")
+                except ValueError:
+                    print("Invalid input.")
     else:
         print("\nNo pilots found matching all criteria.")
 
