@@ -260,12 +260,12 @@ class PilotSearchPanel(scrolled.ScrolledPanel):
         search_sizer.Add(self.name_text, 1, wx.EXPAND)
         
         search_sizer.Add(wx.StaticText(self, label="Country:"), 0, wx.ALIGN_CENTER_VERTICAL)
-        self.country_choice = wx.Choice(self, choices=["All"] + list(COUNTRIES.keys()))
+        self.country_choice = wx.Choice(self, choices=["All"] + list(COUNTRIES.values()))
         self.country_choice.SetSelection(0)
         search_sizer.Add(self.country_choice, 1, wx.EXPAND)
         
         search_sizer.Add(wx.StaticText(self, label="Rank:"), 0, wx.ALIGN_CENTER_VERTICAL)
-        self.rank_choice = wx.Choice(self, choices=["All"] + list(RANKS.keys()))
+        self.rank_choice = wx.Choice(self, choices=["All"] + list(RANKS.values()))
         self.rank_choice.SetSelection(0)
         search_sizer.Add(self.rank_choice, 1, wx.EXPAND)
         
@@ -318,19 +318,21 @@ class PilotSearchPanel(scrolled.ScrolledPanel):
                 
                 # Filter by country
                 if country_idx > 0:
-                    country = list(COUNTRIES.keys())[country_idx - 1]
+                    # Get country ID from selection (index - 1 since "All" is at index 0)
+                    country_id = list(COUNTRIES.keys())[country_idx - 1]
                     if results:
-                        results = [r for r in results if r.country == country]
+                        results = [r for r in results if r.country == country_id]
                     else:
-                        results = self.client.search_pilots_by_country(country)
+                        results = self.client.search_pilots_by_country(country_id)
                 
                 # Filter by rank
                 if rank_idx > 0:
-                    rank = list(RANKS.keys())[rank_idx - 1]
+                    # Get rank ID from selection (index - 1 since "All" is at index 0)
+                    rank_id = list(RANKS.keys())[rank_idx - 1]
                     if results:
-                        results = [r for r in results if r.rank == rank]
+                        results = [r for r in results if r.rank == rank_id]
                     else:
-                        results = self.client.search_pilots_by_rank(rank)
+                        results = self.client.search_pilots_by_rank(rank_id)
                 
                 self.results = results
                 wx.CallAfter(self.update_results)
