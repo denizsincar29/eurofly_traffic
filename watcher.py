@@ -113,8 +113,8 @@ def watch_pilot(client, pilot_name):
             if not new_pilot:
                 timestamp = datetime.now().strftime('%H:%M:%S')
                 print(f"\n[{timestamp}] ⚠️  Pilot went offline")
-                print(f"[{timestamp}] Waiting for pilot to come back online...")
-                continue
+                print(f"[{timestamp}] Stopping watch - pilot offline for 15 seconds")
+                break
             
             # Check for changes
             changes_detected = False
