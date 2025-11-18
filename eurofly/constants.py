@@ -116,3 +116,16 @@ RANKS = {
     6: "captain",
     7: "teacher pilot",
 }
+
+# Flight type codes
+FLIGHT_TYPES = {
+    "FRE": "Free flight",
+    "COF": "Company flight",
+    "CHF": "Charter flight",
+    "BCF": "Business cargo flight",
+    "BTF": "Business transport flight",
+    "MAF": "MAF flight",  # Unknown meaning
+}
+
+# Reverse mapping for flight type name to code lookup (case-insensitive)
+FLIGHT_TYPE_TO_CODE = {name.lower(): code for code, name in FLIGHT_TYPES.items()}

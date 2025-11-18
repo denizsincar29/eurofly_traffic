@@ -51,7 +51,7 @@ def get_all_pilots() -> str:
     result += "=" * 80 + "\n\n"
     
     for pilot in traffic.all_pilots:
-        result += f"{pilot.name} ({pilot.callsign}) - {pilot.airline}\n"
+        result += f"{pilot.name} ({pilot.callsign}) - {pilot.get_flight_type_name()} ({pilot.flight_type})\n"
         if pilot.flight.description:
             result += f"  Description: {pilot.flight.description}\n"
         result += f"  Status: {pilot.flight.status}\n"
@@ -110,7 +110,7 @@ def filter_pilots_by_name(name: str) -> str:
     result += "=" * 80 + "\n\n"
     
     for pilot in pilots:
-        result += f"{pilot.name} ({pilot.callsign}) - {pilot.airline}\n"
+        result += f"{pilot.name} ({pilot.callsign}) - {pilot.get_flight_type_name()} ({pilot.flight_type})\n"
         if pilot.flight.description:
             result += f"  Description: {pilot.flight.description}\n"
         result += f"  Status: {pilot.flight.status}\n"
@@ -176,7 +176,7 @@ def get_pilot_info(pilot_name: str) -> str:
     result += "=" * 80 + "\n\n"
     
     result += f"Callsign: {pilot.callsign}\n"
-    result += f"Airline: {pilot.airline}\n"
+    result += f"Flight Type: {pilot.get_flight_type_name()} ({pilot.flight_type})\n"
     
     if pilot.flight.description:
         result += f"Description: {pilot.flight.description}\n"
@@ -382,6 +382,247 @@ def list_cache_snapshots() -> str:
         filepath = os.path.join(CACHE_DIR, filename)
         size = os.path.getsize(filepath)
         result += f"{filename} ({size:,} bytes)\n"
+    
+    return result
+
+
+@mcp.tool()
+def get_all_airplanes(sort_by: Optional[str] = None) -> str:
+    """Get list of all available private airplanes in Eurofly.
+    
+    Args:
+        sort_by: Optional sort parameter (name, cat, type, thrust, eng, pas, speed, range, height, price, qual)
+    
+    Returns:
+        Formatted list of all airplanes with their specifications.
+    """
+    airplanes = client.get_airplanes(sort_by=sort_by)
+    
+    result = f"Private Airplanes in Eurofly ({len(airplanes)} total)\n"
+    result += "=" * 80 + "\n\n"
+    
+    for plane in airplanes:
+        result += f"{plane.name}\n"
+        result += f"  Category: {plane.category}, Type: {plane.type}\n"
+        result += f"  Passengers: {plane.passengers}, Engines: {plane.engines} ({plane.propulsion_type})\n"
+        result += f"  Speed: {plane.speed_kmh} km/h, Range: {plane.range_km} km\n"
+        result += f"  Cruising altitude: {plane.cruising_altitude_m}m\n"
+        result += f"  Price: ${plane.price:,}, Qualification: ${plane.qualification_price}\n"
+        result += "\n"
+    
+    return result
+
+
+@mcp.tool()
+def find_airplanes_by_passengers(min_passengers: int, max_passengers: Optional[int] = None) -> str:
+    """Find airplanes by passenger capacity range.
+    
+    Args:
+        min_passengers: Minimum number of passengers
+        max_passengers: Maximum number of passengers (optional)
+    
+    Returns:
+        List of airplanes matching the passenger capacity criteria.
+    """
+    airplanes = client.get_airplanes()
+    filtered = client.filter_airplanes_by_passengers(airplanes, min_passengers, max_passengers)
+    
+    result = f"Airplanes with {min_passengers}"
+    if max_passengers:
+        result += f"-{max_passengers}"
+    else:
+        result += "+"
+    result += f" passengers ({len(filtered)} found)\n"
+    result += "=" * 80 + "\n\n"
+    
+    for plane in filtered:
+        result += f"{plane.name} - {plane.passengers} passengers, ${plane.price:,}\n"
+    
+    return result
+
+
+@mcp.tool()
+def find_airplanes_by_price(max_price: int) -> str:
+    """Find airplanes within a budget.
+    
+    Args:
+        max_price: Maximum price in dollars
+    
+    Returns:
+        List of airplanes under the specified price.
+    """
+    airplanes = client.get_airplanes()
+    filtered = client.filter_airplanes_by_price(airplanes, max_price)
+    
+    result = f"Airplanes under ${max_price:,} ({len(filtered)} found)\n"
+    result += "=" * 80 + "\n\n"
+    
+    for plane in filtered:
+        result += f"{plane.name}\n"
+        result += f"  Price: ${plane.price:,}, Passengers: {plane.passengers}\n"
+        result += f"  Speed: {plane.speed_kmh} km/h, Range: {plane.range_km} km\n"
+        result += "\n"
+    
+    return result
+
+
+@mcp.tool()
+def find_airplanes_by_category(category: int) -> str:
+    """Find airplanes in a specific category.
+    
+    Args:
+        category: Category number (1-7)
+    
+    Returns:
+        List of airplanes in the specified category.
+    """
+    airplanes = client.get_airplanes()
+    filtered = client.filter_airplanes_by_category(airplanes, category)
+    
+    result = f"Category {category} Airplanes ({len(filtered)} found)\n"
+    result += "=" * 80 + "\n\n"
+    
+    for plane in filtered:
+        result += f"{plane.name} - {plane.passengers} pax, ${plane.price:,}\n"
+    
+    return result
+
+
+@mcp.tool()
+def get_airports(country_id: Optional[int] = None, category: Optional[int] = None) -> str:
+    """Get list of airports, optionally filtered by country and category.
+    
+    Args:
+        country_id: Optional country ID to filter by (e.g., 151 for Russia)
+        category: Optional category to filter by (1-7)
+    
+    Returns:
+        Formatted list of airports with their details.
+    """
+    airports = client.get_airports(country_id=country_id, category=category)
+    
+    result = f"Airports ({len(airports)} found)\n"
+    if country_id:
+        result += f"Country ID: {country_id}\n"
+    if category:
+        result += f"Category: {category}\n"
+    result += "=" * 80 + "\n\n"
+    
+    for airport in airports:
+        result += f"{airport.name}"
+        if airport.code:
+            result += f" ({airport.code})"
+        result += "\n"
+        if airport.country:
+            result += f"  Country: {airport.country}"
+            if airport.region:
+                result += f", Region: {airport.region}"
+            result += "\n"
+        if airport.category:
+            result += f"  Category: {airport.category}"
+        if airport.difficulty:
+            result += f", Difficulty: {airport.difficulty}"
+        if airport.category or airport.difficulty:
+            result += "\n"
+        if airport.runways is not None:
+            result += f"  Runways: {airport.runways}"
+        if airport.elevation is not None:
+            result += f", Elevation: {airport.elevation}m"
+        if airport.runways is not None or airport.elevation is not None:
+            result += "\n"
+        if airport.approach_frequency:
+            result += f"  Approach frequency: {airport.approach_frequency} MHz\n"
+        result += "\n"
+    
+    return result
+
+
+@mcp.tool()
+def find_airports_with_runways(min_runways: int = 1, country_id: Optional[int] = None, category: Optional[int] = None) -> str:
+    """Find airports with at least a certain number of runways.
+    
+    Args:
+        min_runways: Minimum number of runways (default: 1)
+        country_id: Optional country ID to filter by
+        category: Optional category to filter by (1-7)
+    
+    Returns:
+        List of airports with sufficient runways.
+    """
+    airports = client.get_airports(country_id=country_id, category=category)
+    filtered = client.filter_airports_by_runway_length(airports, min_runways)
+    
+    result = f"Airports with {min_runways}+ runway(s) ({len(filtered)} found)\n"
+    result += "=" * 80 + "\n\n"
+    
+    for airport in filtered:
+        result += f"{airport.name}"
+        if airport.code:
+            result += f" ({airport.code})"
+        result += f" - {airport.runways} runway(s)\n"
+        if airport.elevation is not None:
+            result += f"  Elevation: {airport.elevation}m\n"
+    
+    return result
+
+
+@mcp.tool()
+def find_airports_by_elevation(max_elevation: int, country_id: Optional[int] = None, category: Optional[int] = None) -> str:
+    """Find airports below a certain elevation.
+    
+    Args:
+        max_elevation: Maximum elevation in meters
+        country_id: Optional country ID to filter by
+        category: Optional category to filter by (1-7)
+    
+    Returns:
+        List of airports below the specified elevation.
+    """
+    airports = client.get_airports(country_id=country_id, category=category)
+    filtered = client.filter_airports_by_elevation(airports, max_elevation)
+    
+    result = f"Airports below {max_elevation}m elevation ({len(filtered)} found)\n"
+    result += "=" * 80 + "\n\n"
+    
+    for airport in filtered:
+        result += f"{airport.name}"
+        if airport.code:
+            result += f" ({airport.code})"
+        result += f" - {airport.elevation}m\n"
+        if airport.runways is not None:
+            result += f"  Runways: {airport.runways}\n"
+    
+    return result
+
+
+@mcp.tool()
+def find_smallest_runway_airplane() -> str:
+    """Find the airplane that requires the smallest runway.
+    
+    This is a convenience function that helps answer questions like
+    "what airplane requires the smallest runway?"
+    
+    Returns:
+        Information about airplanes suitable for small runways.
+    """
+    airplanes = client.get_airplanes()
+    
+    # Category 1 airplanes typically require smaller runways
+    # Also consider smaller passenger counts and lower speeds
+    cat1 = client.filter_airplanes_by_category(airplanes, category=1)
+    
+    # Sort by passengers (smaller planes need smaller runways)
+    cat1_sorted = sorted(cat1, key=lambda x: (x.passengers, x.speed_kmh))
+    
+    result = "Airplanes Suitable for Small Runways\n"
+    result += "=" * 80 + "\n\n"
+    result += "Category 1 airplanes with smallest capacity (best for small runways):\n\n"
+    
+    for plane in cat1_sorted[:10]:  # Top 10
+        result += f"{plane.name}\n"
+        result += f"  Passengers: {plane.passengers}, Speed: {plane.speed_kmh} km/h\n"
+        result += f"  Range: {plane.range_km} km, Price: ${plane.price:,}\n"
+        result += "\n"
     
     return result
 

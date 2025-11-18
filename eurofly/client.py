@@ -2,12 +2,16 @@
 import httpx
 import json
 import os
+import logging
 from bs4 import BeautifulSoup
 from typing import List, Optional
 from datetime import datetime
 import re
 
-from .models import Flight, Pilot, PilotProfile, EuroflyTraffic
+from .models import Flight, Pilot, PilotProfile, EuroflyTraffic, Airplane, Airport
+
+# Configure logger for this module
+logger = logging.getLogger(__name__)
 
 
 class EuroflyClient:
@@ -92,11 +96,11 @@ class EuroflyClient:
                     if pid_match:
                         pilot_id = int(pid_match.group(1))
 
-                # Parse name, callsign and airline
+                # Parse name, callsign and flight type
                 if ' - ' in text:
-                    name_callsign, airline = text.rsplit(' - ', 1)
+                    name_callsign, flight_type = text.rsplit(' - ', 1)
                 else:
-                    name_callsign, airline = text, ""
+                    name_callsign, flight_type = text, ""
                 if ' ' in name_callsign:
                     name, callsign = name_callsign.rsplit(' ', 1)
                 else:
@@ -129,7 +133,8 @@ class EuroflyClient:
                 last_position = None
                 description = None
 
-                # parse lines
+                # parse lines - track unrecognized lines for description
+                unrecognized_lines_for_desc = []
                 for line in flight_lines:
                     # Check if this is a recognized line type
                     is_recognized = False
@@ -157,6 +162,10 @@ class EuroflyClient:
                         status = "Taking off"
                         location_from = line.split("Taking off at")[1].strip()
                         is_recognized = True
+                    elif "Landing at" in line:
+                        status = "Landing"
+                        location_to = line.split("Landing at")[1].strip()
+                        is_recognized = True
                     elif "Took of from" in line:
                         status = "In air"
                         location_from = line.split("Took of from:")[1].strip()
@@ -176,9 +185,40 @@ class EuroflyClient:
                     elif line.startswith("No flightplan"):
                         is_recognized = True
                     
-                    # If line is not recognized, it's likely a description
-                    if not is_recognized and line and not description:
-                        description = line
+                    # Collect unrecognized lines - description is always the last line
+                    if not is_recognized and line:
+                        unrecognized_lines_for_desc.append(line)
+                
+                # Description is the last unrecognized line
+                if unrecognized_lines_for_desc:
+                    description = unrecognized_lines_for_desc[-1]
+
+                # Debug logging when status is None
+                if status is None:
+                    # Get the HTML snippet for this pilot entry (compact)
+                    pilot_html = str(center)
+                    temp_sibling = center.next_sibling
+                    html_context = pilot_html
+                    for _ in range(10):  # Get up to 10 sibling elements for context
+                        if temp_sibling and temp_sibling.name != "center":
+                            if hasattr(temp_sibling, 'name'):
+                                html_context += str(temp_sibling)
+                            elif isinstance(temp_sibling, str):
+                                html_context += temp_sibling
+                            temp_sibling = temp_sibling.next_sibling
+                        else:
+                            break
+                    
+                    # Create a concise, informative debug message
+                    reason = "Missing status line (e.g., 'Standing at', 'Landing at', 'Took of from', etc.)"
+                    if unrecognized_lines_for_desc:
+                        reason += f" - Check if unrecognized line should be a status: {unrecognized_lines_for_desc}"
+                    
+                    logger.debug(
+                        f"⚠️  Status=None for {name} ({callsign}) | Reason: {reason}\n"
+                        f"    All lines: {flight_lines}\n"
+                        f"    HTML: {html_context[:500]}{'...' if len(html_context) > 500 else ''}"
+                    )
 
                 flight = Flight(
                     aircraft=aircraft,
@@ -192,7 +232,7 @@ class EuroflyClient:
                 pilot = Pilot(
                     name=name,
                     callsign=callsign,
-                    airline=airline,
+                    flight_type=flight_type,
                     flight=flight,
                     pilot_id=pilot_id
                 )
@@ -225,10 +265,26 @@ class EuroflyClient:
         if not content_div:
             raise ValueError("Could not find content div in pilot profile page")
         
+        # Extract bio from h2 tag after "About the pilot"
+        bio = None
+        h2_tags = content_div.find_all('h2')
+        for h2 in h2_tags:
+            text = h2.get_text()  # Don't strip yet to preserve line breaks
+            if 'About the pilot' in text:
+                # Bio is the rest of the text after "About the pilot"
+                lines = [line.strip() for line in text.split('\n') if line.strip()]
+                # Remove "About the pilot" line
+                filtered_lines = [line for line in lines if line != 'About the pilot']
+                if filtered_lines:
+                    bio = '\n'.join(filtered_lines)
+                break
+        
         text = content_div.get_text(separator='\n', strip=True)
         lines = [line.strip() for line in text.split('\n') if line.strip()]
         
         profile_data = {'pilot_id': pilot_id}
+        if bio:
+            profile_data['bio'] = bio
         
         # Extract pilot name and info from first line
         if lines:
@@ -479,3 +535,300 @@ class EuroflyClient:
                 results.append((pilot_id, text))
         
         return results
+    
+    def fetch_airplanes_html(self, sort_by: Optional[str] = None) -> str:
+        """Fetch the private airplanes HTML page.
+        
+        Args:
+            sort_by: Optional sort parameter (name, cat, type, thrust, eng, pas, speed, range, height, price, qual)
+        
+        Returns:
+            HTML content of the airplanes page
+        """
+        params = {}
+        if sort_by:
+            params["sort"] = sort_by
+        
+        response = self.session.get(f"{self.BASE_URL}/private-planes", params=params)
+        response.raise_for_status()
+        return response.text
+    
+    def parse_airplanes(self, html: str) -> List[Airplane]:
+        """Parse airplanes HTML into list of Airplane objects.
+        
+        Args:
+            html: HTML content from the private-planes page
+            
+        Returns:
+            List of Airplane objects
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        airplanes = []
+        
+        # Find the main table
+        table = soup.find('table')
+        if not table:
+            return airplanes
+        
+        # Find all rows, skip the header row
+        rows = table.find_all('tr')
+        
+        for row in rows[1:]:  # Skip header row
+            cols = row.find_all('td')
+            if len(cols) >= 12:
+                try:
+                    airplane = Airplane(
+                        row=int(cols[0].get_text(strip=True)),
+                        name=cols[1].get_text(strip=True),
+                        category=int(cols[2].get_text(strip=True)),
+                        type=cols[3].get_text(strip=True),
+                        propulsion_type=cols[4].get_text(strip=True),
+                        engines=int(cols[5].get_text(strip=True)),
+                        passengers=int(cols[6].get_text(strip=True)),
+                        speed_kmh=int(cols[7].get_text(strip=True)),
+                        range_km=int(cols[8].get_text(strip=True)),
+                        cruising_altitude_m=int(cols[9].get_text(strip=True)),
+                        price=int(cols[10].get_text(strip=True)),
+                        qualification_price=int(cols[11].get_text(strip=True))
+                    )
+                    airplanes.append(airplane)
+                except (ValueError, IndexError) as e:
+                    logger.debug(f"Error parsing airplane row: {e}")
+                    continue
+        
+        return airplanes
+    
+    def get_airplanes(self, sort_by: Optional[str] = None) -> List[Airplane]:
+        """Fetch and parse all private airplanes.
+        
+        Args:
+            sort_by: Optional sort parameter (name, cat, type, thrust, eng, pas, speed, range, height, price, qual)
+            
+        Returns:
+            List of Airplane objects
+        """
+        html = self.fetch_airplanes_html(sort_by=sort_by)
+        return self.parse_airplanes(html)
+    
+    def filter_airplanes_by_passengers(self, airplanes: List[Airplane], min_passengers: int, max_passengers: Optional[int] = None) -> List[Airplane]:
+        """Filter airplanes by passenger capacity.
+        
+        Args:
+            airplanes: List of Airplane objects
+            min_passengers: Minimum number of passengers
+            max_passengers: Maximum number of passengers (optional)
+            
+        Returns:
+            Filtered list of Airplane objects
+        """
+        if max_passengers is None:
+            return [a for a in airplanes if a.passengers >= min_passengers]
+        return [a for a in airplanes if min_passengers <= a.passengers <= max_passengers]
+    
+    def filter_airplanes_by_price(self, airplanes: List[Airplane], max_price: int) -> List[Airplane]:
+        """Filter airplanes by maximum price.
+        
+        Args:
+            airplanes: List of Airplane objects
+            max_price: Maximum price
+            
+        Returns:
+            Filtered list of Airplane objects
+        """
+        return [a for a in airplanes if a.price <= max_price]
+    
+    def filter_airplanes_by_category(self, airplanes: List[Airplane], category: int) -> List[Airplane]:
+        """Filter airplanes by category.
+        
+        Args:
+            airplanes: List of Airplane objects
+            category: Category number (1-7)
+            
+        Returns:
+            Filtered list of Airplane objects
+        """
+        return [a for a in airplanes if a.category == category]
+    
+    def fetch_airports_html(self, country_id: Optional[int] = None, category: Optional[int] = None) -> str:
+        """Fetch the airports HTML page.
+        
+        Args:
+            country_id: Optional country ID to filter by
+            category: Optional category to filter by (1-7)
+        
+        Returns:
+            HTML content of the airports page
+        """
+        params = {}
+        if country_id is not None:
+            params["state"] = str(country_id)
+        if category is not None:
+            params["cat"] = str(category)
+        
+        response = self.session.get(f"{self.BASE_URL}/airports", params=params)
+        response.raise_for_status()
+        return response.text
+    
+    def parse_airports(self, html: str) -> List[Airport]:
+        """Parse airports HTML into list of Airport objects.
+        
+        Args:
+            html: HTML content from the airports page
+            
+        Returns:
+            List of Airport objects
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        airports = []
+        
+        # Find all h3 tags which contain airport names
+        h3_tags = soup.find_all('h3')
+        
+        for h3 in h3_tags:
+            try:
+                # Airport name is in the h3 tag
+                name_parts = h3.get_text(strip=True).split(' - ')
+                if len(name_parts) < 2:
+                    continue
+                
+                name = name_parts[0].strip()
+                code = name_parts[1].strip() if len(name_parts) > 1 else None
+                airport_type = name_parts[2].strip() if len(name_parts) > 2 else None
+                
+                # Find the following text with location info (comes AFTER h3, not before)
+                # Need to get parent center tag's next siblings
+                center = h3.parent
+                next_elements = []
+                for sibling in center.next_siblings:
+                    if isinstance(sibling, str):
+                        text = sibling.strip()
+                        if text and text != '--':
+                            next_elements.append(text)
+                    if len(next_elements) >= 3:
+                        break
+                
+                # Parse the location line (e.g., "Russia - Europe - ")
+                country = None
+                region = None
+                if next_elements:
+                    location_text = next_elements[0]
+                    location_parts = [p.strip() for p in location_text.split(' - ') if p.strip()]
+                    if len(location_parts) >= 1:
+                        country = location_parts[0]
+                    if len(location_parts) >= 2:
+                        region = location_parts[1]
+                
+                # Parse the details line (e.g., "Cat: 1; Difficulty: 1; Latitude: 51.824; Longitude: 143.082; elevation 69")
+                category = None
+                difficulty = None
+                latitude = None
+                longitude = None
+                elevation = None
+                
+                if len(next_elements) >= 2:
+                    details_text = next_elements[1]
+                    
+                    cat_match = re.search(r'Cat:\s*(\d+)', details_text)
+                    if cat_match:
+                        category = int(cat_match.group(1))
+                    
+                    diff_match = re.search(r'Difficulty:\s*(\d+)', details_text)
+                    if diff_match:
+                        difficulty = int(diff_match.group(1))
+                    
+                    lat_match = re.search(r'Latitude:\s*([\d.-]+)', details_text)
+                    if lat_match:
+                        latitude = float(lat_match.group(1))
+                    
+                    lon_match = re.search(r'Longitude:\s*([\d.-]+)', details_text)
+                    if lon_match:
+                        longitude = float(lon_match.group(1))
+                    
+                    elev_match = re.search(r'elevation\s+(\d+)', details_text)
+                    if elev_match:
+                        elevation = int(elev_match.group(1))
+                
+                # Parse runway info (e.g., "Runways: 1;  Aproach frequency: 118.7; ")
+                runways = None
+                approach_frequency = None
+                
+                if len(next_elements) >= 3:
+                    runway_text = next_elements[2]
+                    
+                    runway_match = re.search(r'Runways:\s*(\d+)', runway_text)
+                    if runway_match:
+                        runways = int(runway_match.group(1))
+                    
+                    freq_match = re.search(r'Aproach frequency:\s*([\d.]+)', runway_text)
+                    if freq_match:
+                        approach_frequency = float(freq_match.group(1))
+                
+                airport = Airport(
+                    name=name,
+                    code=code,
+                    type=airport_type,
+                    country=country,
+                    region=region,
+                    category=category,
+                    difficulty=difficulty,
+                    latitude=latitude,
+                    longitude=longitude,
+                    elevation=elevation,
+                    runways=runways,
+                    approach_frequency=approach_frequency
+                )
+                airports.append(airport)
+            except Exception as e:
+                logger.debug(f"Error parsing airport: {e}")
+                continue
+        
+        return airports
+    
+    def get_airports(self, country_id: Optional[int] = None, category: Optional[int] = None) -> List[Airport]:
+        """Fetch and parse airports.
+        
+        Args:
+            country_id: Optional country ID to filter by
+            category: Optional category to filter by (1-7)
+            
+        Returns:
+            List of Airport objects
+        """
+        html = self.fetch_airports_html(country_id=country_id, category=category)
+        return self.parse_airports(html)
+    
+    def filter_airports_by_runway_length(self, airports: List[Airport], min_runways: int = 1) -> List[Airport]:
+        """Filter airports by minimum number of runways.
+        
+        Args:
+            airports: List of Airport objects
+            min_runways: Minimum number of runways
+            
+        Returns:
+            Filtered list of Airport objects
+        """
+        return [a for a in airports if a.runways is not None and a.runways >= min_runways]
+    
+    def filter_airports_by_category(self, airports: List[Airport], category: int) -> List[Airport]:
+        """Filter airports by category.
+        
+        Args:
+            airports: List of Airport objects
+            category: Category number (1-7)
+            
+        Returns:
+            Filtered list of Airport objects
+        """
+        return [a for a in airports if a.category == category]
+    
+    def filter_airports_by_elevation(self, airports: List[Airport], max_elevation: int) -> List[Airport]:
+        """Filter airports by maximum elevation.
+        
+        Args:
+            airports: List of Airport objects
+            max_elevation: Maximum elevation in meters
+            
+        Returns:
+            Filtered list of Airport objects
+        """
+        return [a for a in airports if a.elevation is not None and a.elevation <= max_elevation]

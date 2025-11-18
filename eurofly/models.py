@@ -24,6 +24,7 @@ class PilotProfile(BaseModel):
     """Detailed profile information for a pilot."""
     pilot_id: int
     name: str
+    bio: Optional[str] = None  # Pilot's bio/description
     rank: Optional[str] = None
     rank_number: Optional[int] = None
     sex: Optional[str] = None
@@ -48,7 +49,7 @@ class Pilot(BaseModel):
     """Pilot information from traffic data."""
     name: str
     callsign: str
-    airline: str
+    flight_type: str  # Flight type code (FRE, COF, CHF, BCF, BTF, MAF)
     flight: Flight
     pilot_id: Optional[int] = None
     
@@ -72,8 +73,17 @@ class Pilot(BaseModel):
             raise ValueError("Pilot ID not available for this Pilot object")
         return self._client.get_pilot_profile(self.pilot_id, use_cache=use_cache)
 
+    def get_flight_type_name(self) -> str:
+        """Get the full name of the flight type.
+        
+        Returns:
+            Full flight type name (e.g., 'Free flight' for 'FRE') or the code itself if unknown.
+        """
+        from .constants import FLIGHT_TYPES
+        return FLIGHT_TYPES.get(self.flight_type.upper(), self.flight_type)
+
     def __repr__(self):
-        return f"<Pilot {self.name} ({self.callsign}) - {self.airline}>"
+        return f"<Pilot {self.name} ({self.callsign}) - {self.flight_type}>"
 
 
 class EuroflyTraffic(BaseModel):
@@ -269,3 +279,42 @@ class EuroflyTraffic(BaseModel):
         with open(filepath, 'r', encoding='utf-8') as f:
             data = json.load(f)
         return cls(**data)
+
+
+class Airplane(BaseModel):
+    """Information about a private airplane in Eurofly."""
+    row: int
+    name: str
+    category: int
+    type: str
+    propulsion_type: str
+    engines: int
+    passengers: int
+    speed_kmh: int
+    range_km: int
+    cruising_altitude_m: int
+    price: int
+    qualification_price: int
+    
+    def __repr__(self):
+        return f"<Airplane {self.name}, {self.passengers} pax, {self.speed_kmh} km/h, ${self.price}>"
+
+
+class Airport(BaseModel):
+    """Information about an airport in Eurofly."""
+    name: str
+    code: Optional[str] = None
+    type: Optional[str] = None  # private, commercial, military, etc.
+    country: Optional[str] = None
+    region: Optional[str] = None  # e.g., "Europe", "Asia"
+    category: Optional[int] = None
+    difficulty: Optional[int] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    elevation: Optional[int] = None
+    runways: Optional[int] = None
+    approach_frequency: Optional[float] = None
+    runway_length: Optional[int] = None  # in meters
+    
+    def __repr__(self):
+        return f"<Airport {self.name}, Cat:{self.category}, Runways:{self.runways}, Elevation:{self.elevation}m>"
