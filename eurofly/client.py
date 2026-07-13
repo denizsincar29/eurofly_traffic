@@ -8,7 +8,7 @@ from typing import List, Optional
 from datetime import datetime
 import re
 
-from .models import Flight, Pilot, PilotProfile, EuroflyTraffic, Airplane, Airport
+from .models import Flight, Pilot, PilotProfile, EuroflyTraffic, Airplane, Airport, NewsPost, RulesSection, EuroflyRules
 
 # Configure logger for this module
 logger = logging.getLogger(__name__)
@@ -18,6 +18,7 @@ class EuroflyClient:
     """Client for interacting with the Eurofly traffic system."""
     
     BASE_URL = "https://eurofly.stefankiss.sk/ef3"
+    ROOT_URL = "https://eurofly.stefankiss.sk"
     CACHE_FILE = ".cache.json"
 
     def __init__(self, cache_file: Optional[str] = None):
@@ -832,3 +833,141 @@ class EuroflyClient:
             Filtered list of Airport objects
         """
         return [a for a in airports if a.elevation is not None and a.elevation <= max_elevation]
+
+    # ---------- News ----------
+
+    def fetch_news_html(self, page: int = 1) -> str:
+        """Fetch raw HTML of a news listing page."""
+        url = f"{self.ROOT_URL}/news"
+        if page > 1:
+            url += f"?page={page}"
+        response = self.session.get(url)
+        response.raise_for_status()
+        return response.text
+
+    def parse_news(self, html: str) -> List[NewsPost]:
+        """Parse news HTML into a list of NewsPost objects."""
+        soup = BeautifulSoup(html, "html.parser")
+        posts = []
+        for box in soup.select("div.box"):
+            h3 = box.find("h3")
+            if not h3:
+                continue
+            title = h3.get_text(strip=True)
+
+            # date is the text node right after h3, before the first <br>
+            date_raw = ""
+            node = h3.next_sibling
+            while node and isinstance(node, str) and not node.strip():
+                node = node.next_sibling
+            if isinstance(node, str):
+                date_raw = node.strip()
+
+            # posts use either <p>/<li> or bare text with <br> - safest to
+            # strip h3, turn <br> into \n and take the whole block's text
+            box_copy = BeautifulSoup(str(box), "html.parser")
+            h3_copy = box_copy.find("h3")
+            if h3_copy:
+                h3_copy.decompose()
+            for br in box_copy.find_all("br"):
+                br.replace_with("\n")
+            text = box_copy.get_text("", strip=False)
+            lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+            if lines and lines[0] == date_raw:
+                lines = lines[1:]
+            content = "\n\n".join(lines)
+
+            posts.append(NewsPost(title=title, date_raw=date_raw, content=content))
+        return posts
+
+    def get_news(self, page: int = 1) -> List[NewsPost]:
+        """Fetch and parse a single page of news (20 posts per page)."""
+        html = self.fetch_news_html(page)
+        return self.parse_news(html)
+
+    def get_all_news(self, max_pages: int = 10) -> List[NewsPost]:
+        """Fetch and parse all news pages until an empty page is hit."""
+        posts: List[NewsPost] = []
+        page = 1
+        while page <= max_pages:
+            page_posts = self.get_news(page)
+            if not page_posts:
+                break
+            posts.extend(page_posts)
+            page += 1
+        return posts
+
+    # ---------- Rules ----------
+
+    def fetch_rules_html(self, lang: str = "en") -> str:
+        """Fetch raw HTML of the Eurofly 3 rules document."""
+        url = f"{self.ROOT_URL}/files/rules-ef3/Rules_{lang}.html"
+        response = self.session.get(url)
+        response.raise_for_status()
+        return response.text
+
+    @staticmethod
+    def _table_to_text(table) -> str:
+        headers = [th.get_text(strip=True) for th in table.select("thead th")]
+        lines = []
+        for row in table.select("tbody tr"):
+            cells = [c.get_text(strip=True) for c in row.find_all(["th", "td"])]
+            if headers and len(cells) == len(headers):
+                lines.append("; ".join(f"{h}: {v}" for h, v in zip(headers, cells)))
+            else:
+                lines.append(" | ".join(cells))
+        return "\n".join(lines)
+
+    def parse_rules(self, html: str) -> EuroflyRules:
+        """Parse rules HTML into an EuroflyRules object."""
+        soup = BeautifulSoup(html, "html.parser")
+
+        header = soup.find("h1")
+        effective_date = None
+        if header:
+            parts = list(header.stripped_strings)
+            if len(parts) > 1:
+                effective_date = parts[-1]
+
+        intro_tag = soup.find("aside")
+        intro = intro_tag.get_text(" ", strip=True) if intro_tag else None
+
+        sections: List[RulesSection] = []
+        for article in soup.find_all("article"):
+            html_id = article.get("id", "")
+            h2 = article.find("h2")
+            table = article.find("table")
+
+            if h2:
+                full_title = h2.get_text(strip=True)
+                m = re.match(r"(\d+)\.\s*(.*)", full_title)
+                number = int(m.group(1)) if m else 0
+                title = m.group(2) if m else full_title
+
+                art_copy = BeautifulSoup(str(article), "html.parser")
+                h2_copy = art_copy.find("h2")
+                if h2_copy:
+                    h2_copy.decompose()
+                content = art_copy.get_text(" ", strip=True)
+                content_type = "text"
+            elif table:
+                caption = table.find("caption")
+                title = caption.get_text(strip=True) if caption else f"Section {html_id}"
+                number = int(html_id) if html_id.isdigit() else 0
+                content = self._table_to_text(table)
+                content_type = "table"
+            else:
+                continue
+
+            sections.append(RulesSection(
+                number=number, title=title, html_id=html_id,
+                content_type=content_type, content=content,
+            ))
+
+        return EuroflyRules(effective_date=effective_date, intro=intro, sections=sections)
+
+    def get_rules(self, lang: str = "en") -> EuroflyRules:
+        """Fetch and parse the Eurofly 3 rules. lang: 'en', 'sk', etc. -
+        check available variants under /files/rules-ef3/ on the site."""
+        html = self.fetch_rules_html(lang)
+        return self.parse_rules(html)
