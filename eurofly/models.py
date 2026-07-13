@@ -318,3 +318,54 @@ class Airport(BaseModel):
     
     def __repr__(self):
         return f"<Airport {self.name}, Cat:{self.category}, Runways:{self.runways}, Elevation:{self.elevation}m>"
+
+
+class NewsPost(BaseModel):
+    """A single news post from eurofly.stefankiss.sk/news."""
+    title: str
+    date_raw: str  # date as shown on site, e.g. "Streda, 24. december 2025"
+                    # (Slovak weekday/month names, intentionally left unparsed -
+                    # site is multilingual and format isn't stable)
+    content: str    # post text, paragraphs joined by \n\n
+
+    def __repr__(self):
+        return f"<NewsPost {self.title!r} ({self.date_raw})>"
+
+
+class RulesSection(BaseModel):
+    """A section of the Eurofly 3 rules. Can be plain text or a table
+    (see content_type)."""
+    number: int
+    title: str
+    html_id: str
+    content_type: str = "text"  # "text" | "table"
+    content: str  # for text - plain text; for table - line-by-line dump
+                   # "Column: value; Column2: value2" per row
+
+    def __repr__(self):
+        return f"<RulesSection {self.number}. {self.title!r} ({self.content_type})>"
+
+
+class EuroflyRules(BaseModel):
+    """The full Eurofly 3 rules document."""
+    effective_date: Optional[str] = None
+    intro: Optional[str] = None
+    sections: List[RulesSection] = Field(default_factory=list)
+
+    def get_section(self, number: int) -> Optional[RulesSection]:
+        """Get a section by number (1-10)."""
+        for s in self.sections:
+            if s.number == number:
+                return s
+        return None
+
+    def search(self, keyword: str) -> List[RulesSection]:
+        """Find sections containing a keyword (in title or content)."""
+        kw = keyword.lower()
+        return [
+            s for s in self.sections
+            if kw in s.title.lower() or kw in s.content.lower()
+        ]
+
+    def __repr__(self):
+        return f"<EuroflyRules sections={len(self.sections)}, effective={self.effective_date}>"
